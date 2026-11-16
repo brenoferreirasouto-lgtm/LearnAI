@@ -315,7 +315,10 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'Seu resultado final' }),
     ).toBeTruthy()
     expect(screen.getByText('71%')).toBeTruthy()
-    expect(screen.getByText('5/7')).toBeTruthy()
+    const resultSummary = screen.getByRole('region', {
+      name: 'Resumo do resultado final',
+    })
+    expect(resultSummary.textContent).toContain('5 / 7')
     expect(screen.getByText(/Avaliação/)).toBeTruthy()
     expect(screen.getByText('Verificação de informações')).toBeTruthy()
   })
