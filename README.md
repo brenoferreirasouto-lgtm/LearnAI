@@ -323,6 +323,14 @@ A prática contribuiu para revisão conjunta das soluções, compartilhamento de
 | Vinicius + João | *F15* — Cadastro de usuário | Criação de conta para o estudante acompanhar seu aprendizado | Aprendemos a validar dados de cadastro, organizar as informações do usuário e testar o fluxo de criação de conta. |
 
 ---
+### Uso de Inteligência Artificial no projeto
+
+A equipe utilizou ferramentas de IA generativa como apoio ao desenvolvimento do Learn AI, principalmente para revisar ideias de implementação, analisar código, estruturar e revisar testes automatizados, organizar cenários de teste, melhorar a documentação técnica e apoiar o uso de Git/GitHub durante as entregas.
+
+As sugestões produzidas por IA foram revisadas pela equipe antes de serem incorporadas ao projeto. A validação das funcionalidades foi realizada no aplicativo em execução e por meio dos testes automatizados registrados no repositório. A IA foi utilizada como ferramenta de apoio ao processo de desenvolvimento, e não como substituta da revisão, dos testes ou das decisões da equipe.
+
+---
+
 ### Issue / Bug Tracker — Sprint 02
 
 - [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
