@@ -237,7 +237,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F06 — Construtor guiado de prompts](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
 - [Diagrama](https://github.com/user-attachments/assets/ae1781bc-75af-49e8-8b94-df08b800bd71)
 
-- [F07 — Menu de comparação de prompts](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F07 — Menu de comparação de prompts — evidência em vídeo](https://trello.com/1/cards/6ad91477009dc62edf0259b1/attachments/6afb48661c7804b96b21d671/download/F07_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/d0774560-d611-41cf-94ca-85a3c3bf81b5)
 
 - [F08 — Verificar informações produzidas por IA](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
