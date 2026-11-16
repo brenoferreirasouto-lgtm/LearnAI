@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import ReactDOM from "react-dom/client"
-import App from "./App"
+import App from "./components/AccountGate"
 import SplashScreen from "./SplashScreen"
 import "./index.css"
 

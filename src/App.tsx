@@ -2624,12 +2624,14 @@ function Profile({
   onClear,
   onPlacement,
   onSignOut,
+  persisted = false,
 }: {
   progress: Progress
   onSave: (name: string) => void
   onClear: () => void
   onPlacement: () => void
   onSignOut: () => void
+  persisted?: boolean
 }) {
   const [name, setName] = useState(progress.profileName)
   function submit(event: FormEvent) {
@@ -2640,8 +2642,8 @@ function Profile({
     <>
       <PageTitle
         eyebrow="PREFERÊNCIAS"
-        title="Seu perfil local"
-        description="Este espaço existe neste navegador e não representa uma conta autenticada."
+        title={persisted ? "Seu perfil" : "Seu perfil local"}
+        description={persisted ? "Seu nome e e-mail estão salvos no servidor." : "Este espaço existe neste navegador e não representa uma conta autenticada."}
       />
       <div className="profile-grid">
         <section className="content-panel profile-panel">
@@ -2654,7 +2656,7 @@ function Profile({
             Seu percurso e os projetos criados ficam armazenados localmente
             neste navegador.
           </p>
-          <form onSubmit={submit}>
+          {persisted ? <p><strong>E-mail:</strong> {progress.profileEmail}</p> : <form onSubmit={submit}>
             <label htmlFor="profile-name">Nome de exibição</label>
             <div className="inline-field">
               <input
@@ -2667,7 +2669,7 @@ function Profile({
                 Salvar nome
               </Button>
             </div>
-          </form>
+          </form>}
           <div className="profile-details">
             <span>
               <strong>Nível sugerido</strong>
@@ -2706,8 +2708,7 @@ function Profile({
             servidor de aprendizagem.
           </p>
           <p>
-            Limpar os dados remove definitivamente este perfil e seu progresso
-            deste navegador.
+            Limpar os dados remove o progresso deste navegador. Cadastros salvos no servidor são preservados.
           </p>
           <Button className="clear-button" variant="danger" onClick={onClear}>
             Limpar dados locais
@@ -2835,12 +2836,16 @@ function FinalResultsPage({
   )
 }
 
-function App() {
-  const [progress, setProgress] = useState<Progress>(() => readProgress())
+function App({ onAccountSignOut, account }: { onAccountSignOut?: () => void; account?: { nome: string; email: string } } = {}) {
+  const [progress, setProgress] = useState<Progress>(() => {
+    const saved = readProgress()
+    if (!account) return saved
+    return { ...(saved.profileEmail === account.email ? saved : createEmptyProgress()), profileName: account.nome, profileEmail: account.email }
+  })
   const [theme, setTheme] = useState<Theme>(() => readTheme())
-  const [isSignedOut, setIsSignedOut] = useState(() => readLocalSignOut())
+  const [isSignedOut, setIsSignedOut] = useState(() => account ? false : readLocalSignOut())
   const [page, setPage] = useState<Page>(() =>
-    progress.profileName && !isSignedOut ? "dashboard" : "welcome",
+    progress.profileName && !isSignedOut ? (onAccountSignOut ? "profile" : "dashboard") : "welcome",
   )
   const [activeLessonId, setActiveLessonId] = useState(
     () => progress.lastLessonId ?? lessons[0].id,
@@ -3066,6 +3071,7 @@ function App() {
     notify("Nome atualizado.")
   }
   function signOut() {
+    if (onAccountSignOut) { onAccountSignOut(); return }
     const saved = saveLocalSignOut(true)
     setIsSignedOut(true)
     navigate("welcome")
@@ -3076,6 +3082,11 @@ function App() {
     )
   }
   function clearLocalData() {
+    if (onAccountSignOut) {
+      setProgress({ ...createEmptyProgress(), profileName: progress.profileName, profileEmail: progress.profileEmail })
+      notify("Progresso local removido. Cadastro preservado no servidor.")
+      return
+    }
     if (
       !window.confirm(
         "Limpar o perfil e todo o progresso armazenado neste navegador? Esta ação não pode ser desfeita.",
@@ -3313,6 +3324,7 @@ function App() {
               onClear={clearLocalData}
               onPlacement={() => navigate("placement")}
               onSignOut={signOut}
+              persisted={Boolean(onAccountSignOut)}
             />
           )}
         </main>
