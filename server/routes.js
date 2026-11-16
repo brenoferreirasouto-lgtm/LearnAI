@@ -1,6 +1,16 @@
 import { randomBytes } from 'node:crypto'
 import { validateRegistration } from '../shared/registration.js'
 import { hashPassword, verifyPassword } from './passwords.js'
+import { defaultSiteContent } from '../shared/site-content.js'
+
+async function readBody(req) {
+  let body = ''
+  for await (const chunk of req) {
+    body += chunk
+    if (Buffer.byteLength(body) > 8192) throw new Error('body-size')
+  }
+  return JSON.parse(body)
+}
 
 export function createApi(store) {
   const attempts = new Map()
@@ -21,6 +31,24 @@ export function createApi(store) {
       if (path === '/api/sessao' && req.method === 'DELETE') {
         store.signOut(token); cookie('', 0)
         return send(200, { mensagem: 'Você saiu do perfil.' })
+      }
+      if (path === '/api/conteudo' && req.method === 'GET')
+        return send(200, { conteudo: store.readContent() || defaultSiteContent })
+      if (path === '/api/admin/conteudo' && req.method === 'PUT') {
+        const user = store.session(token)
+        if (!user) return send(401, { error: 'Entre na sua conta para continuar.' })
+        if (user.perfil !== 'admin') return send(403, { error: 'Acesso permitido apenas para administradores.' })
+        let input
+        try { input = await readBody(req) } catch { return send(400, { error: 'Conteúdo inválido ou muito grande.' }) }
+        const content = {}
+        for (const key of Object.keys(defaultSiteContent)) {
+          const limit = key.toLowerCase().includes('titulo') ? 100 : 1000
+          if (typeof input?.[key] !== 'string' || !input[key].trim() || input[key].trim().length > limit)
+            return send(400, { error: `Preencha os títulos (até 100 caracteres) e descrições (até 1000 caracteres).` })
+          content[key] = input[key].trim()
+        }
+        store.saveContent(content)
+        return send(200, { conteudo: content })
       }
       if (['/api/usuarios', '/api/login'].includes(path) && req.method === 'POST') {
         const key = req.socket.remoteAddress || 'local'
@@ -45,6 +73,9 @@ export function createApi(store) {
           const credentials = store.findCredentials(data.email)
           const valid = await verifyPassword(senha, credentials?.senha_hash || await dummyHash)
           if (!credentials?.senha_hash || !valid) return send(401, { error: 'E-mail ou senha incorretos. Se sua conta foi criada sem senha, defina a primeira senha pelo terminal do projeto.' })
+          const selectedRole = input.perfil || 'usuario'
+          if (!['usuario', 'admin'].includes(selectedRole) || selectedRole !== credentials.perfil)
+            return send(403, { error: 'Este cadastro não possui o perfil selecionado.' })
           const newToken = randomBytes(32).toString('hex')
           store.db.exec('BEGIN IMMEDIATE')
           try {
