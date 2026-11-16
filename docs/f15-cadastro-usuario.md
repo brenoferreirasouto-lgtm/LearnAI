@@ -2,6 +2,25 @@
 
 Branch: `feature/f15-cadastro-usuario`.
 
+## Perfis de usuário e administrador
+
+No login, selecione **Usuário** (padrão) ou **Administrador**. Novos cadastros sempre são usuários; escolher admin no navegador não concede permissões. O servidor consulta o perfil do banco em cada edição.
+
+As contas fictícias abaixo são criadas localmente com `npm run criar-perfis-demo` (já executado neste ambiente):
+
+| Perfil | E-mail | Senha de demonstração |
+| --- | --- | --- |
+| Administrador | admin@learnai.local | AdminLearnAI!2026 |
+| Usuário | usuario@learnai.local | UsuarioLearnAI!2026 |
+
+O comando preserva contas que já existirem e não redefine suas senhas ou permissões. As credenciais acima são públicas de demonstração; antes de usar esses perfis em um site publicado, redefina as senhas pelo comando `definir-senha`.
+
+O administrador acessa o painel **Textos do site** e pode editar título e descrição principal e título e descrição do cadastro. Clique em **Salvar alterações**. As edições são persistidas em `conteudo_site` no SQLite e carregadas na tela inicial dos visitantes; quem já estiver com a página aberta deve recarregar. O painel não altera código, cursos, layout ou permissões de outras contas.
+
+Para demonstrar, entre como Administrador, altere um título, salve e saia. Confira o texto na tela inicial. Entre como Usuário: o perfil de aprendizagem é aberto, sem painel de edição. Se selecionar Administrador com credenciais de usuário, o login será recusado.
+
+Endpoints: GET público `/api/conteudo` e PUT `/api/admin/conteudo`, que exige sessão de administrador (401 sem sessão, 403 para usuário comum).
+
 ## Executar
 
 Use Node.js 24 (ou 22.13+) e instale as dependências com `npm install`.
