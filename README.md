@@ -243,7 +243,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F08 — Verificar informações produzidas por IA — evidência em vídeo](https://trello.com/1/cards/6ad9147e64fd6dac0df5e3c2/attachments/6afb4b054b4aeb79f1e7f2c2/download/F08_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/963c8f34-43a6-412e-b32a-7e445d3b0606)
 
-- [F09 — Dashboard de progresso do usuário](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F09 — Dashboard de progresso do usuário — evidência em vídeo](https://trello.com/1/cards/6ad91484df8cf1e54069b929/attachments/6afb4fa7e18d472b53f3b7e1/download/F09_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/7af5c267-f888-4d47-95bb-12b7aab7eabc)
 
 - [F10 — Visualizar resultado final](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
