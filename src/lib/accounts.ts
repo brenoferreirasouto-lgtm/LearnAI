@@ -1,4 +1,5 @@
-export type Usuario = { id: number; nome: string; email: string; criado_em: string }
+import type { SiteContent } from '../../shared/site-content'
+export type Usuario = { id: number; nome: string; email: string; criado_em: string; perfil?: 'usuario' | 'admin' }
 
 export async function accountRequest(path: string, method = 'GET', body?: unknown) {
   let response: Response
@@ -13,5 +14,5 @@ export async function accountRequest(path: string, method = 'GET', body?: unknow
   try { data = await response.json() }
   catch { throw new Error('Servidor indisponível. Tente novamente.') }
   if (!response.ok) throw new Error(data.error || 'Não foi possível concluir a solicitação.')
-  return data as { usuario: Usuario | null }
+  return data as { usuario: Usuario | null; conteudo?: SiteContent }
 }

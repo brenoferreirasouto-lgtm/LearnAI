@@ -2,8 +2,10 @@ import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { Brand, Icon, ThemeToggle, readTheme } from '../App'
 import { validateRegistration } from '../../shared/registration.js'
 import { accountRequest, type Usuario } from '../lib/accounts'
+import { defaultSiteContent, type SiteContent } from '../../shared/site-content'
 
-export default function RegistrationForm({ onCreated, initialMode = 'register' }: { onCreated: (user: Usuario, login?: boolean) => void; initialMode?: 'register' | 'login' }) {
+export default function RegistrationForm({ onCreated, initialMode = 'register', content = defaultSiteContent }: { onCreated: (user: Usuario, login?: boolean) => void; initialMode?: 'register' | 'login'; content?: SiteContent }) {
+  const [perfil, setPerfil] = useState<'usuario' | 'admin'>('usuario')
   const [mode, setMode] = useState(initialMode)
   const [senha, setSenha] = useState('')
   const [nome, setNome] = useState('')
@@ -23,7 +25,7 @@ export default function RegistrationForm({ onCreated, initialMode = 'register' }
     if (senha.length < 8 || senha.length > 128) { setError('A senha deve ter entre 8 e 128 caracteres.'); return }
     setError(''); setBusy(true)
     try {
-      const result = await accountRequest(mode === 'login' ? '/api/login' : '/api/usuarios', 'POST', { ...data, senha })
+      const result = await accountRequest(mode === 'login' ? '/api/login' : '/api/usuarios', 'POST', { ...data, senha, ...(mode === 'login' ? { perfil } : {}) })
       if (!result.usuario) throw new Error('Não foi possível criar o cadastro.')
       setSenha('')
       onCreated(result.usuario, mode === 'login')
@@ -37,8 +39,8 @@ export default function RegistrationForm({ onCreated, initialMode = 'register' }
       <Brand />
       <div className="welcome-copy">
       <span className="eyebrow eyebrow-light">Aprender. Praticar. Criar.</span>
-      <h1>Use IA com mais <span>intenção.</span></h1>
-      <p>Uma jornada prática para fazer perguntas melhores, avaliar respostas com cuidado e transformar conhecimento em projetos seus.</p>
+      <h1>{content.titulo === defaultSiteContent.titulo ? <>Use IA com mais <span>intenção.</span></> : content.titulo}</h1>
+      <p>{content.descricao}</p>
       <div className="welcome-principles">
         <span><Icon name="shield" size={17} /> Pensamento crítico</span>
         <span><Icon name="light" size={17} /> Autoria humana</span>
@@ -50,8 +52,13 @@ export default function RegistrationForm({ onCreated, initialMode = 'register' }
       <ThemeToggle theme={theme} onToggle={() => setTheme(current => current === 'dark' ? 'light' : 'dark')} />
       <div className="welcome-form">
       <span className="step-label">SEU ESPAÇO DE APRENDIZAGEM</span>
-      <h2>{mode === 'login' ? 'Entre na sua conta' : 'Comece por aqui'}</h2><p>{mode === 'login' ? 'Use seu e-mail e senha para continuar seu percurso.' : 'Cadastre seu nome, e-mail e senha para começar.'}</p>
+      <h2>{mode === 'login' ? 'Entre na sua conta' : content.tituloCadastro}</h2><p>{mode === 'login' ? 'Use seu e-mail e senha para continuar seu percurso.' : content.descricaoCadastro}</p>
       <form noValidate onSubmit={submit}>
+        {mode === 'login' && <fieldset className="login-role-selector" disabled={busy}>
+          <legend>Entrar como</legend>
+          <label><input type="radio" name="perfil" value="usuario" checked={perfil === 'usuario'} onChange={() => { setPerfil('usuario'); setError('') }} /> Usuário</label>
+          <label><input type="radio" name="perfil" value="admin" checked={perfil === 'admin'} onChange={() => { setPerfil('admin'); setError('') }} /> Administrador</label>
+        </fieldset>}
         {mode === 'register' && <><label htmlFor="learner-name">Como podemos chamar você?</label>
         <input id="learner-name" name="name" autoComplete="name" placeholder="Seu nome" required maxLength={60} value={nome} onChange={e => setNome(e.target.value)} /></>}
         <label htmlFor="learner-email">E-mail</label>
