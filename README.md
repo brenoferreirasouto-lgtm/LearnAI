@@ -311,6 +311,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
 - Status no momento da validação: **Open**
 - O issue registra um débito técnico identificado durante a validação da Sprint 2 e não bloqueia a execução atual do Learn AI.
+<img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
 
 ---
 
