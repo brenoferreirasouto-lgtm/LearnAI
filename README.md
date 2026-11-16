@@ -246,7 +246,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F09 — Dashboard de progresso do usuário — evidência em vídeo](https://trello.com/1/cards/6ad91484df8cf1e54069b929/attachments/6afb4fa7e18d472b53f3b7e1/download/F09_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/7af5c267-f888-4d47-95bb-12b7aab7eabc)
 
-- [F10 — Visualizar resultado final](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F10 — Visualizar resultado final — evidência em vídeo](https://trello.com/1/cards/6ad9148ce210b387868b333e/attachments/6afb51b5ce123880f2f3437f/download/F10_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/8b8e696f-e974-4acd-b7e1-98b1dd1c33fe)
 
 - [F11 — Recomendações de aprendizagem](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
