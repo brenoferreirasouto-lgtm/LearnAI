@@ -5,6 +5,7 @@
   "type": "module",
   "engines": { "node": ">=22.13.0" },
   "scripts": {
+    "definir-senha": "node server/set-password.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

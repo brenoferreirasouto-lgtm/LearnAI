@@ -1,7 +1,10 @@
 import { randomBytes } from 'node:crypto'
 import { validateRegistration } from '../shared/registration.js'
+import { hashPassword, verifyPassword } from './passwords.js'
 
 export function createApi(store) {
+  const attempts = new Map()
+  const dummyHash = hashPassword(randomBytes(32).toString('hex'))
   return async (req, res, next) => {
     const path = (req.url || '').split('?')[0]
     if (!path.startsWith('/api/')) return next()
@@ -19,7 +22,13 @@ export function createApi(store) {
         store.signOut(token); cookie('', 0)
         return send(200, { mensagem: 'Você saiu do perfil.' })
       }
-      if (path === '/api/usuarios' && req.method === 'POST') {
+      if (['/api/usuarios', '/api/login'].includes(path) && req.method === 'POST') {
+        const key = req.socket.remoteAddress || 'local'
+        const now = Date.now()
+        for (const [ip, entry] of attempts) if (entry.until < now) attempts.delete(ip)
+        const attempt = attempts.get(key) || { count: 0, until: now + 60000 }
+        attempts.set(key, attempt)
+        if (++attempt.count > 20) return send(429, { error: 'Muitas tentativas. Aguarde um minuto e tente novamente.' })
         let body = ''
         for await (const chunk of req) {
           body += chunk
@@ -27,11 +36,29 @@ export function createApi(store) {
         }
         let input
         try { input = JSON.parse(body) } catch { return send(400, { error: 'Formulário inválido.' }) }
-        const data = validateRegistration(input)
+        const data = validateRegistration(path === '/api/login' ? { ...input, nome: 'Login' } : input)
         if (data.error) return send(400, { error: data.error })
+        const senha = input?.senha
+        if (typeof senha !== 'string' || senha.length < 8 || senha.length > 128)
+          return send(400, { error: 'A senha deve ter entre 8 e 128 caracteres.' })
+        if (path === '/api/login') {
+          const credentials = store.findCredentials(data.email)
+          const valid = await verifyPassword(senha, credentials?.senha_hash || await dummyHash)
+          if (!credentials?.senha_hash || !valid) return send(401, { error: 'E-mail ou senha incorretos. Se sua conta foi criada sem senha, defina a primeira senha pelo terminal do projeto.' })
+          const newToken = randomBytes(32).toString('hex')
+          store.db.exec('BEGIN IMMEDIATE')
+          try {
+            store.signOut(token); store.createSession(newToken, credentials.id)
+            store.db.exec('COMMIT')
+          } catch (error) { store.db.exec('ROLLBACK'); throw error }
+          cookie(newToken, 30 * 86400)
+          const { senha_hash, ...usuario } = credentials
+          return send(200, { usuario })
+        }
+        const hash = await hashPassword(senha)
         store.db.exec('BEGIN IMMEDIATE')
         try {
-          const usuario = store.createUser(data.nome, data.email)
+          const usuario = store.createUser(data.nome, data.email, hash)
           const newToken = randomBytes(32).toString('hex')
           store.signOut(token)
           store.createSession(newToken, usuario.id)

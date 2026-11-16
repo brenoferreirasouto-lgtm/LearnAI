@@ -18,17 +18,21 @@ export function openDatabase(filename = process.env.DATABASE_PATH || resolve('da
       usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
       expira_em INTEGER NOT NULL
     );`)
+  if (!db.prepare('PRAGMA table_info(usuarios)').all().some(column => column.name === 'senha_hash'))
+    db.exec('ALTER TABLE usuarios ADD COLUMN senha_hash TEXT')
   return {
     db,
-    createUser(nome, email) {
-      return db.prepare('INSERT INTO usuarios (nome, email) VALUES (?, ?) RETURNING *').get(nome, email)
+    findCredentials(email) { return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email) },
+    setPassword(id, hash) { db.prepare('UPDATE usuarios SET senha_hash = ? WHERE id = ?').run(hash, id) },
+    createUser(nome, email, hash = null) {
+      return db.prepare('INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?) RETURNING id, nome, email, criado_em').get(nome, email, hash)
     },
     createSession(token, id) {
       db.prepare('DELETE FROM sessoes WHERE expira_em < ?').run(Date.now())
       db.prepare('INSERT INTO sessoes VALUES (?, ?, ?)').run(token, id, Date.now() + 30 * 86400000)
     },
     session(token) {
-      return db.prepare(`SELECT u.* FROM usuarios u JOIN sessoes s ON s.usuario_id = u.id
+      return db.prepare(`SELECT u.id, u.nome, u.email, u.criado_em FROM usuarios u JOIN sessoes s ON s.usuario_id = u.id
         WHERE s.token = ? AND s.expira_em > ?`).get(token, Date.now())
     },
     signOut(token) { db.prepare('DELETE FROM sessoes WHERE token = ?').run(token) },
