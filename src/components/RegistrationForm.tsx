@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { Brand, Icon, ThemeToggle, readTheme } from '../App'
 import { validateRegistration } from '../../shared/registration.js'
 import { accountRequest, type Usuario } from '../lib/accounts'
 
@@ -7,6 +8,11 @@ export default function RegistrationForm({ onCreated }: { onCreated: (user: Usua
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [theme, setTheme] = useState(readTheme)
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    try { localStorage.setItem('learnai.theme.v1', theme) } catch { /* O tema permanece aplicado nesta visita. */ }
+  }, [theme])
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (busy) return
@@ -20,24 +26,38 @@ export default function RegistrationForm({ onCreated }: { onCreated: (user: Usua
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível cadastrar.') }
     finally { setBusy(false) }
   }
-  return <main className="welcome-page">
-    <section className="welcome-story"><div className="welcome-copy">
-      <span className="eyebrow">LEARN AI</span>
+  return <main className="welcome-page" style={{
+    '--welcome-background-image': `url("${import.meta.env.BASE_URL}assets/learnai-hero-desktop.png")`,
+  } as CSSProperties}>
+    <section className="welcome-story">
+      <Brand />
+      <div className="welcome-copy">
+      <span className="eyebrow eyebrow-light">Aprender. Praticar. Criar.</span>
       <h1>Use IA com mais <span>intenção.</span></h1>
-      <p>Aprenda, pratique e crie seu próprio percurso.</p>
-    </div></section>
-    <section className="welcome-form-wrap"><div className="welcome-form">
+      <p>Uma jornada prática para fazer perguntas melhores, avaliar respostas com cuidado e transformar conhecimento em projetos seus.</p>
+      <div className="welcome-principles">
+        <span><Icon name="shield" size={17} /> Pensamento crítico</span>
+        <span><Icon name="light" size={17} /> Autoria humana</span>
+      </div>
+    </div>
+    <div className="story-foot">APRENDIZAGEM APLICADA <span>•</span> IA RESPONSÁVEL</div>
+    </section>
+    <section className="welcome-form-wrap">
+      <ThemeToggle theme={theme} onToggle={() => setTheme(current => current === 'dark' ? 'light' : 'dark')} />
+      <div className="welcome-form">
+      <span className="step-label">SEU ESPAÇO DE APRENDIZAGEM</span>
       <h2>Comece por aqui</h2><p>Cadastre seu nome e e-mail para começar.</p>
       <form noValidate onSubmit={submit}>
         <label htmlFor="learner-name">Como podemos chamar você?</label>
-        <input id="learner-name" autoComplete="name" required maxLength={60} value={nome} onChange={e => setNome(e.target.value)} />
+        <input id="learner-name" autoComplete="name" placeholder="Seu nome" required maxLength={60} value={nome} onChange={e => setNome(e.target.value)} />
         <label htmlFor="learner-email">E-mail</label>
-        <input id="learner-email" type="email" autoComplete="email" required maxLength={120} value={email} onChange={e => setEmail(e.target.value)} />
+        <input id="learner-email" type="email" autoComplete="email" placeholder="voce@exemplo.com" required maxLength={120} value={email} onChange={e => setEmail(e.target.value)} />
         {error && <p className="form-error" role="alert">{error}</p>}
-        <button className="button button-primary full-button" disabled={busy} type="submit">{busy ? 'Cadastrando…' : 'Criar meu espaço'}</button>
+        <button className="button button-primary full-button" disabled={busy} type="submit"><Icon name="arrow" size={17} />{busy ? 'Cadastrando…' : 'Criar meu espaço'}</button>
         <button className="text-action" type="button" disabled={busy} onClick={() => { setNome(''); setEmail(''); setError(''); document.getElementById('learner-name')?.focus() }}>Criar outro cadastro neste dispositivo</button>
       </form>
-      <p className="local-notice">Seu nome e e-mail ficam salvos no servidor. Cadastro sem senha.</p>
+      <div className="local-notice"><Icon name="lock" size={16} /><span><strong>Cadastro sem senha.</strong> Seu nome e e-mail ficam salvos no servidor.</span></div>
+      <div className="welcome-meta">Sem integração com IA ou pagamentos</div>
     </div></section>
   </main>
 }

@@ -33,13 +33,7 @@ export default function AccountGate() {
   if (loading) return <p role="status">Carregando cadastro…</p>
   return <>
     {error && <p role="alert">{error}</p>}
-    {user ? <>
-      <div className="content-panel">
-        {success && <p role="status">{success}</p>}
-        <p><strong>{user.nome}</strong> · {user.email}</p>
-        <button className="button button-secondary" onClick={signOut}>Criar outro cadastro neste dispositivo</button>
-      </div>
-      <App key={user.id} account={user} onAccountSignOut={signOut} />
-    </> : <RegistrationForm onCreated={usuario => { activate(usuario); setError(''); setSuccess('Cadastro realizado com sucesso.') }} />}
+    {user ? <App key={user.id} account={user} accountNotice={success} onAccountSignOut={signOut} />
+      : <RegistrationForm onCreated={usuario => { activate(usuario); setError(''); setSuccess('Cadastro realizado com sucesso.') }} />}
   </>
 }

@@ -2695,6 +2695,7 @@ function Profile({
             <Button variant="secondary" onClick={onSignOut}>
               Sair do perfil neste dispositivo
             </Button>
+            {persisted && <Button variant="quiet" onClick={onSignOut}>Criar outro cadastro neste dispositivo</Button>}
           </div>
         </section>
         <aside className="content-panel privacy-panel">
@@ -2836,7 +2837,7 @@ function FinalResultsPage({
   )
 }
 
-function App({ onAccountSignOut, account }: { onAccountSignOut?: () => void; account?: { nome: string; email: string } } = {}) {
+function App({ onAccountSignOut, account, accountNotice = "" }: { onAccountSignOut?: () => void; account?: { nome: string; email: string }; accountNotice?: string } = {}) {
   const [progress, setProgress] = useState<Progress>(() => {
     const saved = readProgress()
     if (!account) return saved
@@ -2851,7 +2852,7 @@ function App({ onAccountSignOut, account }: { onAccountSignOut?: () => void; acc
     () => progress.lastLessonId ?? lessons[0].id,
   )
   const [activeQuizId, setActiveQuizId] = useState("hallucinations")
-  const [toast, setToast] = useState("")
+  const [toast, setToast] = useState(accountNotice)
   const [storageWarning, setStorageWarning] = useState(false)
 
   useEffect(() => {
@@ -3371,3 +3372,4 @@ function App({ onAccountSignOut, account }: { onAccountSignOut?: () => void; acc
 }
 
 export default App
+export { Brand, Icon, ThemeToggle, readTheme }
