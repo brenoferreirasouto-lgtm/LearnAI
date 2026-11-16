@@ -3,7 +3,9 @@ import { Brand, Icon, ThemeToggle, readTheme } from '../App'
 import { validateRegistration } from '../../shared/registration.js'
 import { accountRequest, type Usuario } from '../lib/accounts'
 
-export default function RegistrationForm({ onCreated }: { onCreated: (user: Usuario) => void }) {
+export default function RegistrationForm({ onCreated, initialMode = 'register' }: { onCreated: (user: Usuario, login?: boolean) => void; initialMode?: 'register' | 'login' }) {
+  const [mode, setMode] = useState(initialMode)
+  const [senha, setSenha] = useState('')
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -16,13 +18,15 @@ export default function RegistrationForm({ onCreated }: { onCreated: (user: Usua
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (busy) return
-    const data = validateRegistration({ nome, email })
+    const data = validateRegistration({ nome: mode === 'login' ? 'Login' : nome, email })
     if (data.error) { setError(data.error); return }
+    if (senha.length < 8 || senha.length > 128) { setError('A senha deve ter entre 8 e 128 caracteres.'); return }
     setError(''); setBusy(true)
     try {
-      const result = await accountRequest('/api/usuarios', 'POST', data)
+      const result = await accountRequest(mode === 'login' ? '/api/login' : '/api/usuarios', 'POST', { ...data, senha })
       if (!result.usuario) throw new Error('Não foi possível criar o cadastro.')
-      onCreated(result.usuario)
+      setSenha('')
+      onCreated(result.usuario, mode === 'login')
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível cadastrar.') }
     finally { setBusy(false) }
   }
@@ -46,17 +50,20 @@ export default function RegistrationForm({ onCreated }: { onCreated: (user: Usua
       <ThemeToggle theme={theme} onToggle={() => setTheme(current => current === 'dark' ? 'light' : 'dark')} />
       <div className="welcome-form">
       <span className="step-label">SEU ESPAÇO DE APRENDIZAGEM</span>
-      <h2>Comece por aqui</h2><p>Cadastre seu nome e e-mail para começar.</p>
+      <h2>{mode === 'login' ? 'Entre na sua conta' : 'Comece por aqui'}</h2><p>{mode === 'login' ? 'Use seu e-mail e senha para continuar seu percurso.' : 'Cadastre seu nome, e-mail e senha para começar.'}</p>
       <form noValidate onSubmit={submit}>
-        <label htmlFor="learner-name">Como podemos chamar você?</label>
-        <input id="learner-name" autoComplete="name" placeholder="Seu nome" required maxLength={60} value={nome} onChange={e => setNome(e.target.value)} />
+        {mode === 'register' && <><label htmlFor="learner-name">Como podemos chamar você?</label>
+        <input id="learner-name" name="name" autoComplete="name" placeholder="Seu nome" required maxLength={60} value={nome} onChange={e => setNome(e.target.value)} /></>}
         <label htmlFor="learner-email">E-mail</label>
-        <input id="learner-email" type="email" autoComplete="email" placeholder="voce@exemplo.com" required maxLength={120} value={email} onChange={e => setEmail(e.target.value)} />
+        <input id="learner-email" name="email" type="email" autoComplete="username" placeholder="voce@exemplo.com" required maxLength={120} value={email} onChange={e => setEmail(e.target.value)} />
+        <label htmlFor="learner-password">Senha</label>
+        <input id="learner-password" name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="Pelo menos 8 caracteres" required minLength={8} maxLength={128} value={senha} onChange={e => setSenha(e.target.value)} />
         {error && <p className="form-error" role="alert">{error}</p>}
-        <button className="button button-primary full-button" disabled={busy} type="submit"><Icon name="arrow" size={17} />{busy ? 'Cadastrando…' : 'Criar meu espaço'}</button>
-        <button className="text-action" type="button" disabled={busy} onClick={() => { setNome(''); setEmail(''); setError(''); document.getElementById('learner-name')?.focus() }}>Criar outro cadastro neste dispositivo</button>
+        <button className="button button-primary full-button" disabled={busy} type="submit"><Icon name="arrow" size={17} />{busy ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar meu espaço'}</button>
+        <button className="text-action" type="button" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setSenha(''); setError('') }}>{mode === 'login' ? 'Ainda não tenho conta' : 'Já tenho conta'}</button>
+        <button className="text-action" type="button" disabled={busy} onClick={() => { setMode('register'); setNome(''); setEmail(''); setSenha(''); setError(''); document.getElementById('learner-name')?.focus() }}>Criar outro cadastro neste dispositivo</button>
       </form>
-      <div className="local-notice"><Icon name="lock" size={16} /><span><strong>Cadastro sem senha.</strong> Seu nome e e-mail ficam salvos no servidor.</span></div>
+      <div className="local-notice"><Icon name="lock" size={16} /><span><strong>Seus dados protegidos.</strong> Sua sessão fica salva por 30 dias ou até você sair. Você pode salvar a senha no gerenciador do navegador.</span></div>
       <div className="welcome-meta">Sem integração com IA ou pagamentos</div>
     </div></section>
   </main>

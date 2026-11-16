@@ -2625,6 +2625,7 @@ function Profile({
   onPlacement,
   onSignOut,
   persisted = false,
+  onCreateAnother,
 }: {
   progress: Progress
   onSave: (name: string) => void
@@ -2632,6 +2633,7 @@ function Profile({
   onPlacement: () => void
   onSignOut: () => void
   persisted?: boolean
+  onCreateAnother?: () => void
 }) {
   const [name, setName] = useState(progress.profileName)
   function submit(event: FormEvent) {
@@ -2695,7 +2697,7 @@ function Profile({
             <Button variant="secondary" onClick={onSignOut}>
               Sair do perfil neste dispositivo
             </Button>
-            {persisted && <Button variant="quiet" onClick={onSignOut}>Criar outro cadastro neste dispositivo</Button>}
+            {persisted && <Button variant="quiet" onClick={onCreateAnother}>Criar outro cadastro neste dispositivo</Button>}
           </div>
         </section>
         <aside className="content-panel privacy-panel">
@@ -2837,7 +2839,7 @@ function FinalResultsPage({
   )
 }
 
-function App({ onAccountSignOut, account, accountNotice = "" }: { onAccountSignOut?: () => void; account?: { nome: string; email: string }; accountNotice?: string } = {}) {
+function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice = "" }: { onAccountSignOut?: () => void; onCreateAnotherAccount?: () => void; account?: { nome: string; email: string }; accountNotice?: string } = {}) {
   const [progress, setProgress] = useState<Progress>(() => {
     const saved = readProgress()
     if (!account) return saved
@@ -3326,6 +3328,7 @@ function App({ onAccountSignOut, account, accountNotice = "" }: { onAccountSignO
               onPlacement={() => navigate("placement")}
               onSignOut={signOut}
               persisted={Boolean(onAccountSignOut)}
+              onCreateAnother={onCreateAnotherAccount}
             />
           )}
         </main>
