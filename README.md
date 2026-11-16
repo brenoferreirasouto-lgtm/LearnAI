@@ -240,7 +240,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F07 — Menu de comparação de prompts — evidência em vídeo](https://trello.com/1/cards/6ad91477009dc62edf0259b1/attachments/6afb48661c7804b96b21d671/download/F07_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/d0774560-d611-41cf-94ca-85a3c3bf81b5)
 
-- [F08 — Verificar informações produzidas por IA](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F08 — Verificar informações produzidas por IA — evidência em vídeo](https://trello.com/1/cards/6ad9147e64fd6dac0df5e3c2/attachments/6afb4b054b4aeb79f1e7f2c2/download/F08_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/963c8f34-43a6-412e-b32a-7e445d3b0606)
 
 - [F09 — Dashboard de progresso do usuário](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
