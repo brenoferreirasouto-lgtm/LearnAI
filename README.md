@@ -331,11 +331,11 @@ As sugestões produzidas por IA foram revisadas pela equipe antes de serem incor
 
 ---
 
-### Issue / Bug Tracker — Sprint 02
+### Issue / Bug Tracker
 
 - [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
-- Status no momento da validação: **Open**
-- O issue registra um débito técnico identificado durante a validação da Sprint 2 e não bloqueia a execução atual do Learn AI.
+- [Issue #30 — F15: cadastro não atende critérios de e-mail e duplicidade](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/30)
+- Os issues são registrados quando os problemas são identificados durante a validação, mantendo o histórico de qualidade do projeto.
 <img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
 
 ---
