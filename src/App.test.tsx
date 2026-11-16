@@ -316,7 +316,7 @@ describe('App', () => {
     ).toBeTruthy()
     expect(screen.getByText('71%')).toBeTruthy()
     expect(screen.getByText('5/7')).toBeTruthy()
-    expect(screen.getByText('Avaliação')).toBeTruthy()
+    expect(screen.getByText(/Avaliação/)).toBeTruthy()
     expect(screen.getByText('Verificação de informações')).toBeTruthy()
   })
 
