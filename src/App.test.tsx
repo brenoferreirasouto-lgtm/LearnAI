@@ -129,8 +129,8 @@ describe('App', () => {
     )
 
     expect(
-      await screen.findByRole('alert'),
-    ).toHaveTextContent('Este e-mail já está cadastrado neste dispositivo.')
+      (await screen.findByRole('alert')).textContent,
+    ).toContain('Este e-mail já está cadastrado neste dispositivo.')
   })
 
   it('deve validar o formato do e-mail no cadastro local', async () => {
@@ -149,8 +149,8 @@ describe('App', () => {
     )
 
     expect(
-      await screen.findByRole('alert'),
-    ).toHaveTextContent('Informe um e-mail válido.')
+      (await screen.findByRole('alert')).textContent,
+    ).toContain('Informe um e-mail válido.')
   })
 
   it('deve permitir sair e retornar ao perfil local sem perder o progresso', async () => {

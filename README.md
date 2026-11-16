@@ -1,4 +1,6 @@
 # Learn AI
+
+F15 — cadastro com banco SQLite: [como executar e roteiro de demonstração](docs/f15-cadastro-usuario.md).
 ![Learn AI - Nova identidade visual](./learn-ai-nova.png.png)
 
 > Plataforma web educacional para promover o letramento em Inteligência Artificial por meio de conteúdos curtos, situações práticas, exercícios interativos e acompanhamento de progresso.
