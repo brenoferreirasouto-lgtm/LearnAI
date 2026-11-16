@@ -306,6 +306,14 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 | Vinicius + João | *F15* — Cadastro de usuário | Criação de conta para o estudante acompanhar seu aprendizado | Aprendemos a validar dados de cadastro, organizar as informações do usuário e testar o fluxo de criação de conta. |
 
 ---
+### Issue / Bug Tracker — Sprint 02
+
+- [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
+- Status no momento da validação: **Open**
+- O issue registra um débito técnico identificado durante a validação da Sprint 2 e não bloqueia a execução atual do Learn AI.
+
+---
+
 ### Visão geral das Sprints e Backlog no Trello
 
    - [Print Backlog](https://github.com/user-attachments/assets/cc3b53a9-f1a6-44de-b8a9-7038f97a5cef)
