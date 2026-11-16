@@ -283,6 +283,23 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 
 ---
 
+### Relato de programação em pares — Sprint 02
+
+Durante a Sprint 02, a equipe realizou atividades em programação em pares. Nas sessões, um integrante ficou responsável pela implementação e navegação no código, enquanto o outro acompanhou o raciocínio, revisou as alterações e ajudou na validação da solução em tempo real.
+
+As duplas registradas para a Sprint 02 foram:
+
+- F06 — Pedro + Breno
+- F07 — Bruno + Vinicius
+- F08 — João + Bruno
+- F09 — Breno + João
+- F10 — Pedro + Vinicius
+- F11 — Bruno + Pedro
+
+A prática contribuiu para revisão conjunta das soluções, compartilhamento de conhecimento e identificação de problemas antes da integração das alterações ao projeto.
+
+---
+
 ### 🔵 Sprint 02
 
 | Dupla | História | O que a dupla implementou | Aprendizados |
