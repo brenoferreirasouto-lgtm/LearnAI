@@ -237,16 +237,16 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F06 — Construtor guiado de prompts](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
 - [Diagrama](https://github.com/user-attachments/assets/ae1781bc-75af-49e8-8b94-df08b800bd71)
 
-- [F07 — Menu de comparação de prompts](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F07 — Menu de comparação de prompts — evidência em vídeo](https://trello.com/1/cards/6ad91477009dc62edf0259b1/attachments/6afb48661c7804b96b21d671/download/F07_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/d0774560-d611-41cf-94ca-85a3c3bf81b5)
 
-- [F08 — Verificar informações produzidas por IA](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F08 — Verificar informações produzidas por IA — evidência em vídeo](https://trello.com/1/cards/6ad9147e64fd6dac0df5e3c2/attachments/6afb4b054b4aeb79f1e7f2c2/download/F08_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/963c8f34-43a6-412e-b32a-7e445d3b0606)
 
-- [F09 — Dashboard de progresso do usuário](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F09 — Dashboard de progresso do usuário — evidência em vídeo](https://trello.com/1/cards/6ad91484df8cf1e54069b929/attachments/6afb4fa7e18d472b53f3b7e1/download/F09_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/7af5c267-f888-4d47-95bb-12b7aab7eabc)
 
-- [F10 — Visualizar resultado final](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F10 — Visualizar resultado final — evidência em vídeo](https://trello.com/1/cards/6ad9148ce210b387868b333e/attachments/6afb51b5ce123880f2f3437f/download/F10_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/8b8e696f-e974-4acd-b7e1-98b1dd1c33fe)
 
 - [F11 — Recomendações de aprendizagem](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
@@ -283,6 +283,23 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 
 ---
 
+### Relato de programação em pares — Sprint 02
+
+Durante a Sprint 02, a equipe realizou atividades em programação em pares. Nas sessões, um integrante ficou responsável pela implementação e navegação no código, enquanto o outro acompanhou o raciocínio, revisou as alterações e ajudou na validação da solução em tempo real.
+
+As duplas registradas para a Sprint 02 foram:
+
+- F06 — Pedro + Breno
+- F07 — Bruno + Vinicius
+- F08 — João + Bruno
+- F09 — Breno + João
+- F10 — Pedro + Vinicius
+- F11 — Bruno + Pedro
+
+A prática contribuiu para revisão conjunta das soluções, compartilhamento de conhecimento e identificação de problemas antes da integração das alterações ao projeto.
+
+---
+
 ### 🔵 Sprint 02
 
 | Dupla | História | O que a dupla implementou | Aprendizados |
@@ -306,6 +323,15 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 | Vinicius + João | *F15* — Cadastro de usuário | Criação de conta para o estudante acompanhar seu aprendizado | Aprendemos a validar dados de cadastro, organizar as informações do usuário e testar o fluxo de criação de conta. |
 
 ---
+### Issue / Bug Tracker — Sprint 02
+
+- [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
+- Status no momento da validação: **Open**
+- O issue registra um débito técnico identificado durante a validação da Sprint 2 e não bloqueia a execução atual do Learn AI.
+<img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
+
+---
+
 ### Visão geral das Sprints e Backlog no Trello
 
    - [Print Backlog](https://github.com/user-attachments/assets/cc3b53a9-f1a6-44de-b8a9-7038f97a5cef)

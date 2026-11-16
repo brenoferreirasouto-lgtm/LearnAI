@@ -33,8 +33,9 @@ import {
   type PracticeResult,
   type QuizResult,
 } from "./lib/progress"
+import { calculateOverallResult } from "./lib/results"
 
-type Page = "welcome" | "dashboard" | "path" | "lesson" | "quiz" | "placement" | "studio" | "projects" | "journey" | "plus" | "profile" | "prompt-practice" | "verification-practice"
+type Page = "welcome" | "dashboard" | "path" | "lesson" | "quiz" | "placement" | "studio" | "projects" | "journey" | "plus" | "profile" | "prompt-practice" | "verification-practice" | "results"
 type PracticeKind = "compare" | "verify"
 type Theme = "light" | "dark"
 type IconName = "arrow" | "award" | "book" | "check" | "chevron" | "clock" | "compass" | "copy" | "flag" | "grid" | "layers" | "light" | "lock" | "menu" | "moon" | "plus" | "search" | "shield" | "spark" | "sun" | "target" | "user" | "x"
@@ -960,9 +961,14 @@ function Dashboard({
         title={`Olá, ${progress.profileName || "estudante"}.`}
         description="Aprenda a usar IA com intenção, repertório e responsabilidade."
         actions={
-          <span className="saved-label">
-            <span /> Progresso salvo neste dispositivo
-          </span>
+          <div className="hero-actions">
+            <span className="saved-label">
+              <span /> Progresso salvo neste dispositivo
+            </span>
+            <Button variant="secondary" onClick={() => onPage("results")}>
+              Ver resultado final
+            </Button>
+          </div>
         }
       />
       {!progress.level && (
@@ -2622,6 +2628,120 @@ function Profile({
   )
 }
 
+function FinalResultsPage({
+  progress,
+  onBack,
+}: {
+  progress: Progress
+  onBack: () => void
+}) {
+  const result = calculateOverallResult(
+    progress.quizResults,
+    progress.practiceResults,
+  )
+  const practiceTitles: Record<string, string> = {
+    "compare-study-plan": "Comparação de prompts · Plano de estudos",
+    "compare-source-synthesis": "Comparação de prompts · Síntese de fontes",
+    "compare-project-update": "Comparação de prompts · Atualização de projeto",
+    "verify-frequency-claim": "Verificação de informações",
+  }
+
+  return (
+    <>
+      <PageTitle
+        eyebrow="DESEMPENHO CONSOLIDADO"
+        title="Seu resultado final"
+        description="Um resumo das avaliações e práticas registradas durante sua jornada de aprendizagem."
+        actions={
+          <Button variant="secondary" onClick={onBack}>
+            Voltar ao painel
+          </Button>
+        }
+      />
+      {result.activitiesCompleted === 0 ? (
+        <EmptyState
+          icon="book"
+          title="Seu resultado ainda está sendo construído"
+          description="Conclua um quiz ou uma prática guiada para começar a compor seu resultado geral."
+        />
+      ) : (
+        <>
+          <section className="stats-row" aria-label="Resumo do resultado final">
+            <article className="stat-card">
+              <span className="stat-icon indigo">
+                <Icon name="award" />
+              </span>
+              <div>
+                <span>DESEMPENHO GERAL</span>
+                <strong>{result.percentage}%</strong>
+              </div>
+            </article>
+            <article className="stat-card">
+              <span className="stat-icon green">
+                <Icon name="check" />
+              </span>
+              <div>
+                <span>ACERTOS</span>
+                <strong>
+                  {result.correct}
+                  <small> / {result.total}</small>
+                </strong>
+              </div>
+            </article>
+            <article className="stat-card">
+              <span className="stat-icon gold">
+                <Icon name="target" />
+              </span>
+              <div>
+                <span>ATIVIDADES CONCLUÍDAS</span>
+                <strong>{result.activitiesCompleted}</strong>
+              </div>
+            </article>
+          </section>
+          <section className="content-panel" aria-labelledby="result-breakdown-title">
+            <div className="panel-heading">
+              <div>
+                <span className="eyebrow">RESULTADOS REGISTRADOS</span>
+                <h2 id="result-breakdown-title">Desempenho por atividade</h2>
+              </div>
+            </div>
+            <div className="missions-list">
+              {result.entries.map((entry) => {
+                const title =
+                  entry.kind === "quiz"
+                    ? quizzes[entry.id]?.title ?? `Avaliação · ${entry.id}`
+                    : practiceTitles[entry.id] ?? `Prática · ${entry.id}`
+                return (
+                  <div className="mission-row" key={`${entry.kind}:${entry.id}`}>
+                    <span className="mission-check mission-done">
+                      <Icon name="check" size={13} />
+                    </span>
+                    <span>
+                      <strong>{title}</strong>
+                      <small>
+                        {entry.kind === "quiz" ? "Avaliação" : "Prática guiada"} ·{" "}
+                        {entry.percentage}%
+                      </small>
+                    </span>
+                    <span className="mission-number">
+                      {entry.score}/{entry.total}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+          <p className="reward-rule">
+            O percentual geral é calculado pela soma dos acertos dividida pelo
+            total de questões e critérios avaliados. O resumo considera os
+            resultados atualmente salvos neste dispositivo.
+          </p>
+        </>
+      )}
+    </>
+  )
+}
+
 function App() {
   const [progress, setProgress] = useState<Progress>(() => readProgress())
   const [theme, setTheme] = useState<Theme>(() => readTheme())
@@ -2959,7 +3079,9 @@ function App() {
   const activeNavigationPage =
     page === "prompt-practice" || page === "verification-practice"
       ? "path"
-      : page
+      : page === "results"
+        ? "dashboard"
+        : page
   return (
     <div className="app-frame">
       <a className="skip-link" href="#main-content">
@@ -3031,6 +3153,12 @@ function App() {
               onQuiz={openQuiz}
               onPractice={openPractice}
               onPlacement={() => navigate("placement")}
+            />
+          )}
+          {page === "results" && (
+            <FinalResultsPage
+              progress={progress}
+              onBack={() => navigate("dashboard")}
             />
           )}
           {page === "path" && (
