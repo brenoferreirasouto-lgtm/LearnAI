@@ -21,9 +21,14 @@ export async function signUp(
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill(password)
   await page.getByRole('button', { name: 'Criar meu espaço' }).click()
-  await expect(
-    page.getByRole('heading', { name: `Olá, ${name}.` }),
-  ).toBeVisible()
+  const heading = page.getByRole('heading', { name: `Olá, ${name}.` })
+  try {
+    await expect(heading).toBeVisible()
+  } catch (error) {
+    const alert = page.getByRole('alert')
+    const message = await alert.count() ? await alert.first().textContent() : 'nenhuma mensagem de erro visível'
+    throw new Error(`Cadastro não concluiu: ${message}\n${error instanceof Error ? error.message : String(error)}`)
+  }
 }
 
 export async function readProgress(page: Page) {
