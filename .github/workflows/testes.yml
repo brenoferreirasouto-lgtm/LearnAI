@@ -55,7 +55,7 @@ jobs:
 
   testes-sistema:
     name: Testes de sistema (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Baixar código
