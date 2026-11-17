@@ -24,7 +24,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `pnpm build && pnpm preview --port ${port} --strictPort`,
+        command: `corepack pnpm@9 build && corepack pnpm@9 preview --port ${port} --strictPort`,
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
