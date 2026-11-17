@@ -16,7 +16,8 @@ test.describe('F15 — Cadastro de usuário', () => {
     expect(saved.profileEmail).toBe(email)
 
     await page.reload()
-    await expect(page.getByRole('heading', { name: 'Olá, Ana.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Seu perfil' })).toBeVisible()
+    await expect(page.getByText(email)).toBeVisible()
   })
 
   test('recusa e-mail inválido', async ({ page }) => {
