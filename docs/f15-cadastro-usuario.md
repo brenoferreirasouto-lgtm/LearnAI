@@ -59,7 +59,7 @@ npm.cmd run definir-senha -- bruno@bruno.com
 Digite a senha e confirme (a entrada fica oculta). A ferramenta também serve para redefinição administrativa local e invalida sessões anteriores da conta. Depois, clique em **Já tenho conta** e entre. Não existe recuperação pública por e-mail nesta versão; apenas saber o e-mail não permite definir a senha de uma conta antiga.
 O progresso de aprendizagem continua local. Nome e e-mail passam a ser persistidos no servidor; antigos cadastros exclusivos do localStorage não são migrados automaticamente.
 
-Hospedagem estática (incluindo apenas publicar `dist`) não executa esta API. Para publicar, é necessário servidor Node com disco persistente, ou adaptar a API a um banco remoto. Em produção HTTPS, configure `NODE_ENV=production` para cookie Secure.
+No desenvolvimento e no `vite preview`, o cadastro usa a API Node + SQLite. Em hospedagem estática como o Vercel, o cliente detecta a ausência dessa API e usa um fallback local no navegador para manter cadastro, login, bloqueio de e-mail duplicado e painel de demonstração funcionais. Nesse modo publicado, os dados ficam restritos ao navegador/dispositivo e não são sincronizados entre usuários ou máquinas.
 
 ## Demonstração
 
