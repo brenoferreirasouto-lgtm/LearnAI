@@ -166,15 +166,17 @@ export async function accountRequest(path: string, method = 'GET', body?: unknow
     return localAccountRequest(path, method, body)
   }
 
-  const contentType = response.headers.get('content-type') || ''
-  if (!contentType.includes('application/json'))
+  const contentType = response.headers?.get?.('content-type') || ''
+
+  if (response.status === 404 && contentType && !contentType.includes('application/json'))
     return localAccountRequest(path, method, body)
 
   let data
   try {
     data = await response.json()
   } catch {
-    return localAccountRequest(path, method, body)
+    if (response.status === 404) return localAccountRequest(path, method, body)
+    throw new Error('Servidor indisponível. Tente novamente.')
   }
 
   if (response.status === 404)
