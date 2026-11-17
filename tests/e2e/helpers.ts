@@ -14,10 +14,12 @@ export async function openFresh(page: Page) {
 export async function signUp(
   page: Page,
   name = 'Estudante',
-  email = 'estudante@example.com',
+  email = `estudante-${crypto.randomUUID()}@example.com`,
+  password = 'senha-teste-123',
 ) {
   await page.getByLabel('Como podemos chamar você?').fill(name)
   await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('Senha').fill(password)
   await page.getByRole('button', { name: 'Criar meu espaço' }).click()
   await expect(
     page.getByRole('heading', { name: `Olá, ${name}.` }),
