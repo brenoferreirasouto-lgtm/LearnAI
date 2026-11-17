@@ -41,6 +41,7 @@ test.describe('F15 — Cadastro de usuário', () => {
 
     await page.getByLabel('Como podemos chamar você?').fill('Outra Ana')
     await page.getByLabel('E-mail').fill(email)
+    await page.getByLabel('Senha').fill('senha-teste-123')
     await page.getByRole('button', { name: 'Criar meu espaço' }).click()
 
     await expect(page.getByRole('alert')).toContainText(
@@ -52,7 +53,8 @@ test.describe('F15 — Cadastro de usuário', () => {
 test.describe('F05 — Continuar de onde parou', () => {
   test('sai do perfil e retorna sem perder o progresso', async ({ page }) => {
     await openFresh(page)
-    await signUp(page, 'Ana', uniqueEmail('ana-f05'))
+    const email = uniqueEmail('ana-f05')
+    await signUp(page, 'Ana', email)
 
     await page.getByRole('button', { name: 'Trilha de aprendizagem' }).first().click()
     await page.getByRole('button', { name: /Estudar módulo/ }).first().click()
@@ -61,11 +63,13 @@ test.describe('F05 — Continuar de onde parou', () => {
 
     await page.getByRole('button', { name: /Ana Perfil neste dispositivo/ }).click()
     await page.getByRole('button', { name: 'Sair do perfil neste dispositivo' }).click()
-    await expect(
-      page.getByRole('heading', { name: 'Continue seu percurso' }),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Entre na sua conta' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Continuar meu percurso' }).click()
+    await page.getByLabel('E-mail').fill(email)
+    await page.getByLabel('Senha').fill('senha-teste-123')
+    await page.getByRole('button', { name: 'Entrar' }).click()
+    await expect(page.getByRole('heading', { name: 'Seu perfil' })).toBeVisible()
+    await page.getByRole('button', { name: 'Visão geral' }).first().click()
     await expect(page.getByRole('heading', { name: 'Olá, Ana.' })).toBeVisible()
 
     const saved = await readProgress(page)
