@@ -9,12 +9,13 @@ F15 — cadastro com banco SQLite: [como executar e roteiro de demonstração](d
 
 - **Aplicação publicada:** https://learn-ai-mu-pied.vercel.app
 - **Plataforma:** Vercel
-- **Status validado:** produção disponível com resposta HTTP 200
-- **Origem do deploy:** branch `main` (build `pnpm build`, saída `dist/`)
+- **Status validado:** produção READY com resposta HTTP 200
+- **Origem do deploy:** branch `feature/f15-cadastro-usuario`, commit `25fd6c5`
+- **Validação antes da publicação:** 52/52 testes Vitest e 10/10 testes Playwright aprovados
 
 ## Produto oficial
 
-O produto do Learn AI é o **app React + Vite que está na branch `main`** (pasta `src/`). É essa versão que está publicada no Vercel e coberta pelos testes.
+O produto do Learn AI é o **app React + Vite** (pasta `src/`). A produção atual foi validada na branch `feature/f15-cadastro-usuario`, enquanto essa versão aguarda integração à `main`.
 
 O protótipo em Next.js das branches `feat/fase-*` foi descontinuado e serve apenas como histórico; nenhuma história é contabilizada a partir dele.
 
