@@ -371,6 +371,7 @@ As sugestões produzidas por IA foram revisadas pela equipe antes de serem incor
 - [Issue #30 — F15: cadastro não atende critérios de e-mail e duplicidade](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/30)
 - Os issues são registrados quando os problemas são identificados durante a validação, mantendo o histórico de qualidade do projeto.
 <img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
+<img width="1965" alt="Issue #30 — F15 cadastro e duplicidade" src="https://github.com/user-attachments/assets/cb6c5b0f-e167-4110-8bad-3c84637927ba" />
 
 ---
 
