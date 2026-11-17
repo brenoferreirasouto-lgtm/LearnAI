@@ -249,7 +249,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F10 — Visualizar resultado final — evidência em vídeo](https://trello.com/1/cards/6ad9148ce210b387868b333e/attachments/6afb51b5ce123880f2f3437f/download/F10_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/8b8e696f-e974-4acd-b7e1-98b1dd1c33fe)
 
-- [F11 — Recomendações de aprendizagem](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F11 — Recomendações de aprendizagem — evidência em vídeo](https://trello.com/1/cards/6ad91495434a7b864f180c6f/attachments/6afb77fe8293213f8dcc7208/download/F11_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/da78f460-08cd-4373-9241-cd37279f5ffa)
 
 
@@ -258,16 +258,16 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 
 **Objetivo:** consolidar o aprendizado e permitir acompanhamento de desempenho.
 
-- [F12 — Quiz de avaliação do aprendizado](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F12 — Quiz de avaliação do aprendizado — evidência em vídeo](https://trello.com/1/cards/6ad914a797ff7111a691c136/attachments/6afb79a2a989d8ac31363cf0/download/F12_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/753a813d-43d6-4e9c-ac8d-1d120cc76be9)
 
-- [F13 — Sistema de feedback dos exercícios](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F13 — Sistema de feedback dos exercícios — evidência em vídeo](https://trello.com/1/cards/6ad914ae4c6034ac30fa4d60/attachments/6afb7bc12474beb030a276f5/download/F13_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/e2f76ef4-596d-49ea-aa72-568b802739f5)
 
-- [F14 — Menu interativo com todas as funcionalidades](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F14 — Menu interativo com todas as funcionalidades — evidência em vídeo](https://trello.com/1/cards/6ad914b439f23bdd861b3c18/attachments/6afb7d1f808b622e1714fb3d/download/F14_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/9a49977b-bdff-4900-be4f-1e637f40e040)
 
-- [F15 — Cadastro de usuário](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F15 — Cadastro de usuário — evidência em vídeo](https://trello.com/1/cards/6ad914b97724f38cbdbe6acd/attachments/6afcd1e73e7a22c18bc726f7/download/F15_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/29468629-43eb-46ac-bc65-0064480cf32d)
 
 ---
