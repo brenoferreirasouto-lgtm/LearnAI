@@ -9,6 +9,7 @@ export default defineConfig((configEnv) =>
         environment: 'jsdom',
         clearMocks: true,
         restoreMocks: true,
+        include: ['src/**/*.test.{ts,tsx}'],
         coverage: {
           provider: 'v8',
           include: ['src/**/*.{ts,tsx}'],

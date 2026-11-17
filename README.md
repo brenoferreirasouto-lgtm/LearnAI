@@ -8,6 +8,27 @@
 - **Aplicação publicada:** https://learn-ai-mu-pied.vercel.app
 - **Plataforma:** Vercel
 - **Status validado:** produção disponível com resposta HTTP 200
+- **Origem do deploy:** branch `main` (build `pnpm build`, saída `dist/`)
+
+## Produto oficial
+
+O produto do Learn AI é o **app React + Vite que está na branch `main`** (pasta `src/`). É essa versão que está publicada no Vercel e coberta pelos testes.
+
+O protótipo em Next.js das branches `feat/fase-*` foi descontinuado e serve apenas como histórico; nenhuma história é contabilizada a partir dele.
+
+## Como executar e testar
+
+```bash
+pnpm install
+pnpm dev          # servidor local
+pnpm test         # testes unitários e de integração (Vitest + Testing Library)
+pnpm exec playwright install chromium
+pnpm test:e2e     # testes de sistema ponta a ponta (Playwright) sobre o build local
+```
+
+Para rodar os mesmos testes de sistema contra o deploy publicado, defina `E2E_BASE_URL=https://learn-ai-mu-pied.vercel.app` antes de `pnpm test:e2e`.
+
+Os testes de sistema ficam em `tests/e2e/` e cobrem as histórias F01, F05, F06, F07, F08, F09, F10, F13, F14 e F15. Os dois conjuntos rodam no GitHub Actions a cada push e pull request para a `main` (`.github/workflows/testes.yml`).
 
 ## Sobre o projeto
 
@@ -118,13 +139,13 @@ O Learn AI busca ampliar o acesso a conhecimentos importantes para o uso conscie
 
 # Equipe
 
-| Integrante | Papel principal
-|---|---|---|
-| Breno Ferreira | Product Owner
-| Bruno Rodrigues | Gestão do Processo
-| Vinicius Beleza | UX/UI 
-| Pedro Freitas | Front-end
-| João Fernando | Back-end
+| Integrante | Papel principal |
+|---|---|
+| Breno Ferreira | Product Owner |
+| Bruno Rodrigues | Gestão do Processo |
+| Vinicius Beleza | UX/UI |
+| Pedro Freitas | Front-end |
+| João Fernando | Back-end |
 
 ---
 
@@ -235,7 +256,6 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F05 — Continuar estudo de onde parou](https://github.com/user-attachments/assets/fa78b2c8-b1af-4663-b138-754df373262e)
 - [Diagrama](https://github.com/user-attachments/assets/fcafd75e-07b7-4150-90a7-3529f145d6f8)
 
-- 
 ## Sprint 02
 
 **Objetivo:** ampliar a experiência de aprendizagem com feedback, segurança e prompting.
@@ -331,7 +351,15 @@ A prática contribuiu para revisão conjunta das soluções, compartilhamento de
 ---
 ### Uso de Inteligência Artificial no projeto
 
-A equipe utilizou ferramentas de IA generativa como apoio ao desenvolvimento do Learn AI, principalmente para revisar ideias de implementação, analisar código, estruturar e revisar testes automatizados, organizar cenários de teste, melhorar a documentação técnica e apoiar o uso de Git/GitHub durante as entregas.
+Ferramentas utilizadas:
+
+| Ferramenta | Como foi usada |
+|---|---|
+| **Figma Make** | Geração da base do app (React + Vite + Tailwind) e da identidade visual; os arquivos `AGENTS.md`, `CLAUDE.md` e `.figma/` vêm desse ambiente. |
+| **Claude (Anthropic) / Claude Code** | Apoio na implementação, revisão de código, escrita dos testes automatizados (Vitest e Playwright) e da documentação. |
+| **Codex (OpenAI)** | Apoio na geração da versão completa do site (branch `codex/site-completo-para-avaliacao`). |
+
+A equipe utilizou essas ferramentas de IA generativa como apoio ao desenvolvimento do Learn AI, principalmente para revisar ideias de implementação, analisar código, estruturar e revisar testes automatizados, organizar cenários de teste, melhorar a documentação técnica e apoiar o uso de Git/GitHub durante as entregas.
 
 As sugestões produzidas por IA foram revisadas pela equipe antes de serem incorporadas ao projeto. A validação das funcionalidades foi realizada no aplicativo em execução e por meio dos testes automatizados registrados no repositório. A IA foi utilizada como ferramenta de apoio ao processo de desenvolvimento, e não como substituta da revisão, dos testes ou das decisões da equipe.
 
@@ -339,8 +367,8 @@ As sugestões produzidas por IA foram revisadas pela equipe antes de serem incor
 
 ### Issue / Bug Tracker
 
-- [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
-- [Issue #30 — F15: cadastro não atende critérios de e-mail e duplicidade](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/30)
+- [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/28)
+- [Issue #30 — F15: cadastro não atende critérios de e-mail e duplicidade](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/30)
 - Os issues são registrados quando os problemas são identificados durante a validação, mantendo o histórico de qualidade do projeto.
 <img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
 
@@ -396,7 +424,7 @@ Concluído
 | **Entrega 02** | Modelagem, diagramas de atividades e prototipação |
 | **Sprint 01** | Implementação das primeiras funcionalidades |
 | **Sprint 02** | Evolução da aplicação e ampliação das funcionalidades |
-| **Sprint 03** | Consolidação do produto, testes, documentação e deploy |
+| **Sprint 03** | Consolidação do produto, testes de sistema, documentação e deploy ([app publicado](https://learn-ai-mu-pied.vercel.app)) |
 ---
 ## Learn AI
 
@@ -409,5 +437,3 @@ Concluído
 [https://www.linkedin.com/in/pedro-lustosa-83a629355/]
 [https://www.linkedin.com/in/joão-fernando-0a6b023b4?utm_source=share_via&utm_content=profile&utm_medium=member_ios]
 [www.linkedin.com/in/bruno-rodrigues-0a9aa43b2]
-[]
-[]
