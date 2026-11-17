@@ -3,6 +3,12 @@
 
 > Plataforma web educacional para promover o letramento em Inteligência Artificial por meio de conteúdos curtos, situações práticas, exercícios interativos e acompanhamento de progresso.
 
+## Deploy
+
+- **Aplicação publicada:** https://learn-ai-mu-pied.vercel.app
+- **Plataforma:** Vercel
+- **Status validado:** produção disponível com resposta HTTP 200
+
 ## Sobre o projeto
 
 O **Learn AI** é um projeto desenvolvido para a disciplina de **Fundamentos de Desenvolvimento de Software (FDS)**.
