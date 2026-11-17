@@ -21,9 +21,10 @@ export async function signUp(
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill(password)
   await page.getByRole('button', { name: 'Criar meu espaço' }).click()
-  const heading = page.getByRole('heading', { name: `Olá, ${name}.` })
   try {
-    await expect(heading).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Seu perfil' })).toBeVisible()
+    await page.getByRole('button', { name: 'Visão geral' }).first().click()
+    await expect(page.getByRole('heading', { name: `Olá, ${name}.` })).toBeVisible()
   } catch (error) {
     const alert = page.getByRole('alert')
     const message = await alert.count() ? await alert.first().textContent() : 'nenhuma mensagem de erro visível'
