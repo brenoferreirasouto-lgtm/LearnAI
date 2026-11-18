@@ -1,7 +1,37 @@
 # Learn AI
+
+F15 — cadastro com banco SQLite: [como executar e roteiro de demonstração](docs/f15-cadastro-usuario.md).
 ![Learn AI - Nova identidade visual](./learn-ai-nova.png.png)
 
 > Plataforma web educacional para promover o letramento em Inteligência Artificial por meio de conteúdos curtos, situações práticas, exercícios interativos e acompanhamento de progresso.
+
+## Deploy
+
+- **Aplicação publicada:** https://learn-ai-mu-pied.vercel.app
+- **Plataforma:** Vercel
+- **Status validado:** produção READY com resposta HTTP 200
+- **Origem do deploy:** branch `feature/f15-cadastro-usuario`, commit `25fd6c5`
+- **Validação antes da publicação:** 52/52 testes Vitest e 10/10 testes Playwright aprovados
+
+## Produto oficial
+
+O produto do Learn AI é o **app React + Vite** (pasta `src/`). A produção atual foi validada na branch `feature/f15-cadastro-usuario`, enquanto essa versão aguarda integração à `main`.
+
+O protótipo em Next.js das branches `feat/fase-*` foi descontinuado e serve apenas como histórico; nenhuma história é contabilizada a partir dele.
+
+## Como executar e testar
+
+```bash
+pnpm install
+pnpm dev          # servidor local
+pnpm test         # testes unitários e de integração (Vitest + Testing Library)
+pnpm exec playwright install chromium
+pnpm test:e2e     # testes de sistema ponta a ponta (Playwright) sobre o build local
+```
+
+Para rodar os mesmos testes de sistema contra o deploy publicado, defina `E2E_BASE_URL=https://learn-ai-mu-pied.vercel.app` antes de `pnpm test:e2e`.
+
+Os testes de sistema ficam em `tests/e2e/` e cobrem as histórias F01, F05, F06, F07, F08, F09, F10, F13, F14 e F15. Os dois conjuntos rodam no GitHub Actions a cada push e pull request para a `main` (`.github/workflows/testes.yml`).
 
 ## Sobre o projeto
 
@@ -112,13 +142,13 @@ O Learn AI busca ampliar o acesso a conhecimentos importantes para o uso conscie
 
 # Equipe
 
-| Integrante | Papel principal
-|---|---|---|
-| Breno Ferreira | Product Owner
-| Bruno Rodrigues | Gestão do Processo
-| Vinicius Beleza | UX/UI 
-| Pedro Freitas | Front-end
-| João Fernando | Back-end
+| Integrante | Papel principal |
+|---|---|
+| Breno Ferreira | Product Owner |
+| Bruno Rodrigues | Gestão do Processo |
+| Vinicius Beleza | UX/UI |
+| Pedro Freitas | Front-end |
+| João Fernando | Back-end |
 
 ---
 
@@ -229,7 +259,6 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F05 — Continuar estudo de onde parou](https://github.com/user-attachments/assets/fa78b2c8-b1af-4663-b138-754df373262e)
 - [Diagrama](https://github.com/user-attachments/assets/fcafd75e-07b7-4150-90a7-3529f145d6f8)
 
-- 
 ## Sprint 02
 
 **Objetivo:** ampliar a experiência de aprendizagem com feedback, segurança e prompting.
@@ -249,7 +278,7 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 - [F10 — Visualizar resultado final — evidência em vídeo](https://trello.com/1/cards/6ad9148ce210b387868b333e/attachments/6afb51b5ce123880f2f3437f/download/F10_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/8b8e696f-e974-4acd-b7e1-98b1dd1c33fe)
 
-- [F11 — Recomendações de aprendizagem](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F11 — Recomendações de aprendizagem — evidência em vídeo](https://trello.com/1/cards/6ad91495434a7b864f180c6f/attachments/6afb77fe8293213f8dcc7208/download/F11_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/da78f460-08cd-4373-9241-cd37279f5ffa)
 
 
@@ -258,16 +287,16 @@ https://github.com/user-attachments/assets/bbbb2e44-8251-4950-96a9-3016804ead6b
 
 **Objetivo:** consolidar o aprendizado e permitir acompanhamento de desempenho.
 
-- [F12 — Quiz de avaliação do aprendizado](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F12 — Quiz de avaliação do aprendizado — evidência em vídeo](https://trello.com/1/cards/6ad914a797ff7111a691c136/attachments/6afb79a2a989d8ac31363cf0/download/F12_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/753a813d-43d6-4e9c-ac8d-1d120cc76be9)
 
-- [F13 — Sistema de feedback dos exercícios](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F13 — Sistema de feedback dos exercícios — evidência em vídeo](https://trello.com/1/cards/6ad914ae4c6034ac30fa4d60/attachments/6afb7bc12474beb030a276f5/download/F13_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/e2f76ef4-596d-49ea-aa72-568b802739f5)
 
-- [F14 — Menu interativo com todas as funcionalidades](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F14 — Menu interativo com todas as funcionalidades — evidência em vídeo](https://trello.com/1/cards/6ad914b439f23bdd861b3c18/attachments/6afb7d1f808b622e1714fb3d/download/F14_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/9a49977b-bdff-4900-be4f-1e637f40e040)
 
-- [F15 — Cadastro de usuário](https://github.com/user-attachments/assets/7fccf2b5-2529-47c1-8d12-bd22bda32f8a)
+- [F15 — Cadastro de usuário — evidência em vídeo](https://trello.com/1/cards/6ad914b97724f38cbdbe6acd/attachments/6afcd1e73e7a22c18bc726f7/download/F15_com_legendas.mp4)
 - [Diagrama](https://github.com/user-attachments/assets/29468629-43eb-46ac-bc65-0064480cf32d)
 
 ---
@@ -323,12 +352,29 @@ A prática contribuiu para revisão conjunta das soluções, compartilhamento de
 | Vinicius + João | *F15* — Cadastro de usuário | Criação de conta para o estudante acompanhar seu aprendizado | Aprendemos a validar dados de cadastro, organizar as informações do usuário e testar o fluxo de criação de conta. |
 
 ---
-### Issue / Bug Tracker — Sprint 02
+### Uso de Inteligência Artificial no projeto
 
-- [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LeranIA/issues/28)
-- Status no momento da validação: **Open**
-- O issue registra um débito técnico identificado durante a validação da Sprint 2 e não bloqueia a execução atual do Learn AI.
+Ferramentas utilizadas:
+
+| Ferramenta | Como foi usada |
+|---|---|
+| **Figma Make** | Geração da base do app (React + Vite + Tailwind) e da identidade visual; os arquivos `AGENTS.md`, `CLAUDE.md` e `.figma/` vêm desse ambiente. |
+| **Claude (Anthropic) / Claude Code** | Apoio na implementação, revisão de código, escrita dos testes automatizados (Vitest e Playwright) e da documentação. |
+| **Codex (OpenAI)** | Apoio na geração da versão completa do site (branch `codex/site-completo-para-avaliacao`). |
+
+A equipe utilizou essas ferramentas de IA generativa como apoio ao desenvolvimento do Learn AI, principalmente para revisar ideias de implementação, analisar código, estruturar e revisar testes automatizados, organizar cenários de teste, melhorar a documentação técnica e apoiar o uso de Git/GitHub durante as entregas.
+
+As sugestões produzidas por IA foram revisadas pela equipe antes de serem incorporadas ao projeto. A validação das funcionalidades foi realizada no aplicativo em execução e por meio dos testes automatizados registrados no repositório. A IA foi utilizada como ferramenta de apoio ao processo de desenvolvimento, e não como substituta da revisão, dos testes ou das decisões da equipe.
+
+---
+
+### Issue / Bug Tracker
+
+- [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/28)
+- [Issue #30 — F15: cadastro não atende critérios de e-mail e duplicidade](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/30)
+- Os issues são registrados quando os problemas são identificados durante a validação, mantendo o histórico de qualidade do projeto.
 <img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
+<img width="1965" alt="Issue #30 — F15 cadastro e duplicidade" src="https://github.com/user-attachments/assets/cb6c5b0f-e167-4110-8bad-3c84637927ba" />
 
 ---
 
@@ -382,7 +428,7 @@ Concluído
 | **Entrega 02** | Modelagem, diagramas de atividades e prototipação |
 | **Sprint 01** | Implementação das primeiras funcionalidades |
 | **Sprint 02** | Evolução da aplicação e ampliação das funcionalidades |
-| **Sprint 03** | Consolidação do produto, testes, documentação e deploy |
+| **Sprint 03** | Consolidação do produto, testes de sistema, documentação e deploy ([app publicado](https://learn-ai-mu-pied.vercel.app)) |
 ---
 ## Learn AI
 
@@ -395,5 +441,3 @@ Concluído
 [https://www.linkedin.com/in/pedro-lustosa-83a629355/]
 [https://www.linkedin.com/in/joão-fernando-0a6b023b4?utm_source=share_via&utm_content=profile&utm_medium=member_ios]
 [www.linkedin.com/in/bruno-rodrigues-0a9aa43b2]
-[]
-[]

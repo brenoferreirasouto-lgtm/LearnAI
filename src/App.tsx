@@ -95,6 +95,46 @@ const quizToLesson: Record<string, string> = {
 
 const themeStorageKey = "learnai.theme.v1"
 const localSignOutStorageKey = "learnai.session.signed-out.v1"
+const localAccountsStorageKey = "learnai.accounts.v1"
+
+function readRegisteredEmails(): string[] {
+  try {
+    const raw = window.localStorage.getItem(localAccountsStorageKey)
+    if (!raw) return []
+    const value: unknown = JSON.parse(raw)
+    if (!Array.isArray(value)) return []
+    return value.filter((item): item is string => typeof item === "string")
+  } catch {
+    return []
+  }
+}
+
+function registerLocalEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase()
+  try {
+    const emails = readRegisteredEmails()
+    if (emails.includes(normalized)) return false
+    window.localStorage.setItem(
+      localAccountsStorageKey,
+      JSON.stringify([...emails, normalized]),
+    )
+    return true
+  } catch {
+    return false
+  }
+}
+
+function unregisterLocalEmail(email: string) {
+  const normalized = email.trim().toLowerCase()
+  try {
+    const emails = readRegisteredEmails().filter((item) => item !== normalized)
+    if (emails.length)
+      window.localStorage.setItem(localAccountsStorageKey, JSON.stringify(emails))
+    else window.localStorage.removeItem(localAccountsStorageKey)
+  } catch {
+    /* A limpeza do perfil continua mesmo se o armazenamento estiver indisponível. */
+  }
+}
 
 function readLocalSignOut(): boolean {
   try {
@@ -668,17 +708,36 @@ function Welcome({
   onToggleTheme,
   isReturning,
   initialName,
+  initialEmail,
 }: {
-  onCreate: (name: string) => void
+  onCreate: (name: string, email: string, createNew: boolean) => string | null
   theme: Theme
   onToggleTheme: () => void
   isReturning: boolean
   initialName: string
+  initialEmail: string
 }) {
   const [name, setName] = useState(initialName)
+  const [email, setEmail] = useState(initialEmail)
+  const [createAnother, setCreateAnother] = useState(false)
+  const [formError, setFormError] = useState("")
+  const registrationMode = !isReturning || createAnother
+
   function submit(event: FormEvent) {
     event.preventDefault()
-    if (name.trim()) onCreate(name.trim().slice(0, 60))
+    setFormError("")
+    const cleanName = name.trim().slice(0, 60)
+    const cleanEmail = email.trim().toLowerCase().slice(0, 120)
+    if (!cleanName) {
+      setFormError("Informe seu nome.")
+      return
+    }
+    if (registrationMode && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setFormError("Informe um e-mail válido.")
+      return
+    }
+    const error = onCreate(cleanName, cleanEmail, registrationMode)
+    if (error) setFormError(error)
   }
   return (
     <main
@@ -719,13 +778,13 @@ function Welcome({
           <span className="step-label">SEU ESPAÇO DE APRENDIZAGEM</span>
           <h2>{isReturning ? "Continue seu percurso" : "Comece por aqui"}</h2>
           <p>
-            {isReturning
+            {isReturning && !createAnother
               ? "Seu perfil e progresso continuam salvos neste navegador. Confirme seu nome para continuar."
-              : "Crie um perfil local para acompanhar seu percurso neste navegador."}
+              : "Crie um cadastro local para acompanhar seu percurso neste navegador."}
           </p>
           <form onSubmit={submit}>
             <label htmlFor="learner-name">
-              {isReturning ? "Nome de exibição" : "Como podemos chamar você?"}
+              {isReturning && !createAnother ? "Nome de exibição" : "Como podemos chamar você?"}
             </label>
             <input
               id="learner-name"
@@ -736,17 +795,51 @@ function Welcome({
               required
               value={name}
             />
+            {registrationMode && (
+              <>
+                <label htmlFor="learner-email">E-mail</label>
+                <input
+                  id="learner-email"
+                  autoComplete="email"
+                  maxLength={120}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="voce@exemplo.com"
+                  required
+                  type="email"
+                  value={email}
+                />
+              </>
+            )}
+            {formError && (
+              <p className="form-error" role="alert">
+                {formError}
+              </p>
+            )}
             <Button className="full-button" icon="arrow" type="submit">
-              {isReturning ? "Continuar meu percurso" : "Criar meu espaço"}
+              {isReturning && !createAnother ? "Continuar meu percurso" : "Criar meu espaço"}
             </Button>
+            {isReturning && !createAnother && (
+              <button
+                className="text-action"
+                type="button"
+                onClick={() => {
+                  setCreateAnother(true)
+                  setName("")
+                  setEmail("")
+                  setFormError("")
+                }}
+              >
+                Criar outro cadastro neste dispositivo
+              </button>
+            )}
           </form>
           <div className="local-notice">
             <Icon name="lock" size={16} />
             <span>
-              <strong>Perfil local, sem autenticação.</strong>{" "}
-              {isReturning
-                ? "Este perfil não usa senha; qualquer pessoa com acesso a este navegador pode reabri-lo."
-                : "Seus dados ficam neste navegador. Ainda não há conta, senha nem sincronização entre dispositivos."}
+              <strong>Cadastro local, sem senha.</strong>{" "}
+              {isReturning && !createAnother
+                ? "Este cadastro fica neste navegador e pode ser reaberto por quem tiver acesso ao dispositivo."
+                : "Nome e e-mail são armazenados apenas neste navegador; não há sincronização entre dispositivos."}
             </span>
           </div>
           <div className="welcome-meta">
@@ -2531,12 +2624,16 @@ function Profile({
   onClear,
   onPlacement,
   onSignOut,
+  persisted = false,
+  onCreateAnother,
 }: {
   progress: Progress
   onSave: (name: string) => void
   onClear: () => void
   onPlacement: () => void
   onSignOut: () => void
+  persisted?: boolean
+  onCreateAnother?: () => void
 }) {
   const [name, setName] = useState(progress.profileName)
   function submit(event: FormEvent) {
@@ -2547,8 +2644,8 @@ function Profile({
     <>
       <PageTitle
         eyebrow="PREFERÊNCIAS"
-        title="Seu perfil local"
-        description="Este espaço existe neste navegador e não representa uma conta autenticada."
+        title={persisted ? "Seu perfil" : "Seu perfil local"}
+        description={persisted ? "Seu nome e e-mail estão salvos no servidor." : "Este espaço existe neste navegador e não representa uma conta autenticada."}
       />
       <div className="profile-grid">
         <section className="content-panel profile-panel">
@@ -2561,7 +2658,7 @@ function Profile({
             Seu percurso e os projetos criados ficam armazenados localmente
             neste navegador.
           </p>
-          <form onSubmit={submit}>
+          {persisted ? <p><strong>E-mail:</strong> {progress.profileEmail}</p> : <form onSubmit={submit}>
             <label htmlFor="profile-name">Nome de exibição</label>
             <div className="inline-field">
               <input
@@ -2574,7 +2671,7 @@ function Profile({
                 Salvar nome
               </Button>
             </div>
-          </form>
+          </form>}
           <div className="profile-details">
             <span>
               <strong>Nível sugerido</strong>
@@ -2600,6 +2697,7 @@ function Profile({
             <Button variant="secondary" onClick={onSignOut}>
               Sair do perfil neste dispositivo
             </Button>
+            {persisted && <Button variant="quiet" onClick={onCreateAnother}>Criar outro cadastro neste dispositivo</Button>}
           </div>
         </section>
         <aside className="content-panel privacy-panel">
@@ -2613,8 +2711,7 @@ function Profile({
             servidor de aprendizagem.
           </p>
           <p>
-            Limpar os dados remove definitivamente este perfil e seu progresso
-            deste navegador.
+            Limpar os dados remove o progresso deste navegador. Cadastros salvos no servidor são preservados.
           </p>
           <Button className="clear-button" variant="danger" onClick={onClear}>
             Limpar dados locais
@@ -2742,18 +2839,22 @@ function FinalResultsPage({
   )
 }
 
-function App() {
-  const [progress, setProgress] = useState<Progress>(() => readProgress())
+function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice = "" }: { onAccountSignOut?: () => void; onCreateAnotherAccount?: () => void; account?: { nome: string; email: string }; accountNotice?: string } = {}) {
+  const [progress, setProgress] = useState<Progress>(() => {
+    const saved = readProgress()
+    if (!account) return saved
+    return { ...(saved.profileEmail === account.email ? saved : createEmptyProgress()), profileName: account.nome, profileEmail: account.email }
+  })
   const [theme, setTheme] = useState<Theme>(() => readTheme())
-  const [isSignedOut, setIsSignedOut] = useState(() => readLocalSignOut())
+  const [isSignedOut, setIsSignedOut] = useState(() => account ? false : readLocalSignOut())
   const [page, setPage] = useState<Page>(() =>
-    progress.profileName && !isSignedOut ? "dashboard" : "welcome",
+    progress.profileName && !isSignedOut ? (onAccountSignOut ? "profile" : "dashboard") : "welcome",
   )
   const [activeLessonId, setActiveLessonId] = useState(
     () => progress.lastLessonId ?? lessons[0].id,
   )
   const [activeQuizId, setActiveQuizId] = useState("hallucinations")
-  const [toast, setToast] = useState("")
+  const [toast, setToast] = useState(accountNotice)
   const [storageWarning, setStorageWarning] = useState(false)
 
   useEffect(() => {
@@ -2797,16 +2898,27 @@ function App() {
   function openPractice(kind: PracticeKind) {
     navigate(kind === "compare" ? "prompt-practice" : "verification-practice")
   }
-  function createProfile(name: string) {
+  function createProfile(
+    name: string,
+    email: string,
+    createNew: boolean,
+  ): string | null {
+    const normalizedEmail = email.trim().toLowerCase()
+    if (createNew) {
+      if (!registerLocalEmail(normalizedEmail))
+        return "Este e-mail já está cadastrado neste dispositivo."
+      const next = createEmptyProgress()
+      next.profileName = name
+      next.profileEmail = normalizedEmail
+      setProgress(next)
+    } else {
+      setProgress((current) => ({ ...current, profileName: name }))
+    }
     saveLocalSignOut(false)
     setIsSignedOut(false)
-    setProgress((current) => ({ ...current, profileName: name }))
     navigate("dashboard")
-    notify(
-      isSignedOut
-        ? "Você voltou ao seu perfil local."
-        : "Seu espaço local está pronto.",
-    )
+    notify(createNew ? "Cadastro local criado com sucesso." : "Você voltou ao seu perfil local.")
+    return null
   }
   function completeLesson(id: string) {
     if (progress.completedLessons.includes(id)) {
@@ -2962,6 +3074,7 @@ function App() {
     notify("Nome atualizado.")
   }
   function signOut() {
+    if (onAccountSignOut) { onAccountSignOut(); return }
     const saved = saveLocalSignOut(true)
     setIsSignedOut(true)
     navigate("welcome")
@@ -2972,6 +3085,11 @@ function App() {
     )
   }
   function clearLocalData() {
+    if (onAccountSignOut) {
+      setProgress({ ...createEmptyProgress(), profileName: progress.profileName, profileEmail: progress.profileEmail })
+      notify("Progresso local removido. Cadastro preservado no servidor.")
+      return
+    }
     if (
       !window.confirm(
         "Limpar o perfil e todo o progresso armazenado neste navegador? Esta ação não pode ser desfeita.",
@@ -2979,6 +3097,7 @@ function App() {
     )
       return
     try {
+      unregisterLocalEmail(progress.profileEmail)
       window.localStorage.removeItem("learnai.progress.v1")
       window.localStorage.removeItem(localSignOutStorageKey)
     } catch {
@@ -3000,6 +3119,7 @@ function App() {
           onToggleTheme={toggleTheme}
           isReturning={isSignedOut && Boolean(progress.profileName)}
           initialName={isSignedOut ? progress.profileName : ""}
+          initialEmail={isSignedOut ? progress.profileEmail : ""}
         />
         {toast && (
           <div className="toast" role="status" aria-live="polite">
@@ -3207,6 +3327,8 @@ function App() {
               onClear={clearLocalData}
               onPlacement={() => navigate("placement")}
               onSignOut={signOut}
+              persisted={Boolean(onAccountSignOut)}
+              onCreateAnother={onCreateAnotherAccount}
             />
           )}
         </main>
@@ -3253,3 +3375,4 @@ function App() {
 }
 
 export default App
+export { Brand, Icon, ThemeToggle, readTheme }

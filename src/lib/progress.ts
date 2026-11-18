@@ -42,6 +42,7 @@ export type PracticeResult = {
 export type Progress = {
   version: 1
   profileName: string
+  profileEmail: string
   level: string | null
   placementScore: number | null
   xp: number
@@ -71,6 +72,7 @@ export function createEmptyProgress(): Progress {
   return {
     version: 1,
     profileName: "",
+    profileEmail: "",
     level: null,
     placementScore: null,
     xp: 0,
@@ -128,6 +130,10 @@ export function readProgress(): Progress {
       profileName:
         typeof data.profileName === "string"
           ? data.profileName.slice(0, 60)
+          : "",
+      profileEmail:
+        typeof data.profileEmail === "string"
+          ? data.profileEmail.trim().toLowerCase().slice(0, 120)
           : "",
       level: typeof data.level === "string" ? data.level : null,
       placementScore:
@@ -187,6 +193,7 @@ export function saveProgress(progress: Progress): boolean {
   try {
     const hasActivity =
       progress.profileName.trim() ||
+      progress.profileEmail.trim() ||
       progress.level ||
       progress.placementScore !== null ||
       progress.xp > 0 ||

@@ -57,6 +57,10 @@ describe('App', () => {
       target: { value: 'Bruno' },
     })
 
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'bruno@example.com' },
+    })
+
     fireEvent.click(
       screen.getByRole('button', {
         name: 'Criar meu espaço',
@@ -75,7 +79,78 @@ describe('App', () => {
       )
 
       expect(saved.profileName).toBe('Bruno')
+      expect(saved.profileEmail).toBe('bruno@example.com')
     })
+  })
+
+  it('deve recusar e-mail duplicado ao criar outro cadastro local', async () => {
+    render(<App />)
+
+    fireEvent.change(
+      screen.getByLabelText('Como podemos chamar você?'),
+      { target: { value: 'Bruno' } },
+    )
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'bruno@example.com' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Criar meu espaço' }),
+    )
+
+    expect(
+      await screen.findByRole('heading', { name: 'Olá, Bruno.' }),
+    ).toBeTruthy()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Bruno Perfil neste dispositivo/,
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Sair do perfil neste dispositivo',
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Criar outro cadastro neste dispositivo',
+      }),
+    )
+
+    fireEvent.change(
+      screen.getByLabelText('Como podemos chamar você?'),
+      { target: { value: 'Outro Bruno' } },
+    )
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'bruno@example.com' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Criar meu espaço' }),
+    )
+
+    expect(
+      (await screen.findByRole('alert')).textContent,
+    ).toContain('Este e-mail já está cadastrado neste dispositivo.')
+  })
+
+  it('deve validar o formato do e-mail no cadastro local', async () => {
+    render(<App />)
+
+    fireEvent.change(
+      screen.getByLabelText('Como podemos chamar você?'),
+      { target: { value: 'Bruno' } },
+    )
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'email-invalido' },
+    })
+
+    fireEvent.submit(
+      screen.getByRole('button', { name: 'Criar meu espaço' }).closest('form')!,
+    )
+
+    expect(
+      (await screen.findByRole('alert')).textContent,
+    ).toContain('Informe um e-mail válido.')
   })
 
   it('deve permitir sair e retornar ao perfil local sem perder o progresso', async () => {
