@@ -41,6 +41,9 @@ jobs:
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
 
+      - name: Checar tipos (TypeScript)
+        run: pnpm exec tsc --noEmit
+
       - name: Executar testes com cobertura
         run: pnpm exec vitest run --coverage
 
