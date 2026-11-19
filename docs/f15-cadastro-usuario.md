@@ -6,14 +6,13 @@ Branch: `feature/f15-cadastro-usuario`.
 
 No login, selecione **Usuário** (padrão) ou **Administrador**. Novos cadastros sempre são usuários; escolher admin no navegador não concede permissões. O servidor consulta o perfil do banco em cada edição.
 
-As contas fictícias abaixo são criadas localmente com `npm run criar-perfis-demo` (já executado neste ambiente):
+Não existem contas prontas nem senhas no código. Para ter um administrador, crie a conta pelo site, como qualquer usuário, e depois promova essa conta no terminal do projeto:
 
-| Perfil | E-mail | Senha de demonstração |
-| --- | --- | --- |
-| Administrador | admin@learnai.local | AdminLearnAI!2026 |
-| Usuário | usuario@learnai.local | UsuarioLearnAI!2026 |
+```bash
+npm run tornar-admin -- admin@exemplo.com
+```
 
-O comando preserva contas que já existirem e não redefine suas senhas ou permissões. As credenciais acima são públicas de demonstração; antes de usar esses perfis em um site publicado, redefina as senhas pelo comando `definir-senha`.
+O comando só muda o perfil de uma conta que já existe. A senha continua sendo a que a pessoa escolheu no cadastro, e ela entra selecionando **Administrador**.
 
 O administrador acessa o painel **Textos do site** e pode editar título e descrição principal e título e descrição do cadastro. Clique em **Salvar alterações**. As edições são persistidas em `conteudo_site` no SQLite e carregadas na tela inicial dos visitantes; quem já estiver com a página aberta deve recarregar. O painel não altera código, cursos, layout ou permissões de outras contas.
 

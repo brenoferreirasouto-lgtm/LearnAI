@@ -27,6 +27,9 @@ export function openDatabase(filename = process.env.DATABASE_PATH || resolve('da
     db,
     findCredentials(email) { return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email) },
     setPassword(id, hash) { db.prepare('UPDATE usuarios SET senha_hash = ? WHERE id = ?').run(hash, id) },
+    promoteToAdmin(email) {
+      return db.prepare("UPDATE usuarios SET perfil = 'admin' WHERE email = ? RETURNING id, nome, email, perfil").get(email) ?? null
+    },
     createUser(nome, email, hash = null) {
       return db.prepare('INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?) RETURNING id, nome, email, criado_em, perfil').get(nome, email, hash)
     },
