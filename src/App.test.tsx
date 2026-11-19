@@ -17,7 +17,30 @@ import {
 } from '@testing-library/react'
 
 import App from './App'
-import { createEmptyProgress, storageKey } from './lib/progress'
+import { createEmptyProgress, storageKey, type Progress } from './lib/progress'
+
+const account = { nome: 'Bruno', email: 'bruno@example.com' }
+
+function saveAccountProgress(change: (progress: Progress) => void = () => {}) {
+  const savedProgress = createEmptyProgress()
+  savedProgress.profileName = account.nome
+  savedProgress.profileEmail = account.email
+  change(savedProgress)
+  localStorage.setItem(storageKey, JSON.stringify(savedProgress))
+}
+
+function readSavedProgress() {
+  return JSON.parse(localStorage.getItem(storageKey) ?? 'null')
+}
+
+function renderApp(onAccountSignOut = vi.fn()) {
+  render(<App account={account} onAccountSignOut={onAccountSignOut} />)
+  return onAccountSignOut
+}
+
+function openDashboard() {
+  fireEvent.click(screen.getByRole('button', { name: 'Visão geral' }))
+}
 
 describe('App', () => {
   beforeEach(() => {
@@ -32,215 +55,64 @@ describe('App', () => {
     localStorage.clear()
   })
 
-  it('deve exibir a tela de boas-vindas quando não existe perfil local', () => {
-    render(<App />)
+  it('deve abrir no perfil da conta, com o e-mail cadastrado', () => {
+    renderApp()
 
-    expect(
-      screen.getByRole('heading', {
-        name: 'Comece por aqui',
-      }),
-    ).toBeTruthy()
-
-    expect(
-      screen.getByLabelText('Como podemos chamar você?'),
-    ).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Seu perfil' })).toBeTruthy()
+    expect(screen.getByText(account.email)).toBeTruthy()
   })
 
-  it('deve criar um perfil local e abrir o painel inicial', async () => {
-    render(<App />)
-
-    const nameInput = screen.getByLabelText(
-      'Como podemos chamar você?',
-    )
-
-    fireEvent.change(nameInput, {
-      target: { value: 'Bruno' },
+  it('deve recuperar o progresso salvo da mesma conta', async () => {
+    saveAccountProgress((progress) => {
+      progress.xp = 45
     })
 
-    fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: 'bruno@example.com' },
-    })
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Criar meu espaço',
-      }),
-    )
+    renderApp()
+    openDashboard()
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Olá, Bruno.',
-      }),
+      screen.getByRole('heading', { name: 'Olá, Bruno.' }),
     ).toBeTruthy()
 
     await waitFor(() => {
-      const saved = JSON.parse(
-        localStorage.getItem(storageKey) ?? 'null',
-      )
-
-      expect(saved.profileName).toBe('Bruno')
-      expect(saved.profileEmail).toBe('bruno@example.com')
-    })
-  })
-
-  it('deve recusar e-mail duplicado ao criar outro cadastro local', async () => {
-    render(<App />)
-
-    fireEvent.change(
-      screen.getByLabelText('Como podemos chamar você?'),
-      { target: { value: 'Bruno' } },
-    )
-    fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: 'bruno@example.com' },
-    })
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Criar meu espaço' }),
-    )
-
-    expect(
-      await screen.findByRole('heading', { name: 'Olá, Bruno.' }),
-    ).toBeTruthy()
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Bruno Perfil neste dispositivo/,
-      }),
-    )
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Sair do perfil neste dispositivo',
-      }),
-    )
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Criar outro cadastro neste dispositivo',
-      }),
-    )
-
-    fireEvent.change(
-      screen.getByLabelText('Como podemos chamar você?'),
-      { target: { value: 'Outro Bruno' } },
-    )
-    fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: 'bruno@example.com' },
-    })
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Criar meu espaço' }),
-    )
-
-    expect(
-      (await screen.findByRole('alert')).textContent,
-    ).toContain('Este e-mail já está cadastrado neste dispositivo.')
-  })
-
-  it('deve validar o formato do e-mail no cadastro local', async () => {
-    render(<App />)
-
-    fireEvent.change(
-      screen.getByLabelText('Como podemos chamar você?'),
-      { target: { value: 'Bruno' } },
-    )
-    fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: 'email-invalido' },
-    })
-
-    fireEvent.submit(
-      screen.getByRole('button', { name: 'Criar meu espaço' }).closest('form')!,
-    )
-
-    expect(
-      (await screen.findByRole('alert')).textContent,
-    ).toContain('Informe um e-mail válido.')
-  })
-
-  it('deve permitir sair e retornar ao perfil local sem perder o progresso', async () => {
-    const savedProgress = createEmptyProgress()
-
-    savedProgress.profileName = 'Bruno'
-    savedProgress.xp = 45
-
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify(savedProgress),
-    )
-
-    render(<App />)
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Bruno Perfil neste dispositivo/,
-      }),
-    )
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Sair do perfil neste dispositivo',
-      }),
-    )
-
-    expect(
-      screen.getByRole('heading', {
-        name: 'Continue seu percurso',
-      }),
-    ).toBeTruthy()
-
-    const nameInput = screen.getByLabelText(
-      'Nome de exibição',
-    ) as HTMLInputElement
-
-    expect(nameInput.value).toBe('Bruno')
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Continuar meu percurso',
-      }),
-    )
-
-    expect(
-      await screen.findByRole('heading', {
-        name: 'Olá, Bruno.',
-      }),
-    ).toBeTruthy()
-
-    await waitFor(() => {
-      const saved = JSON.parse(
-        localStorage.getItem(storageKey) ?? 'null',
-      )
-
-      expect(saved.profileName).toBe('Bruno')
+      const saved = readSavedProgress()
+      expect(saved.profileEmail).toBe(account.email)
       expect(saved.xp).toBe(45)
     })
-
-    expect(
-      localStorage.getItem('learnai.session.signed-out.v1'),
-    ).toBeNull()
   })
 
-  it('deve recuperar um perfil salvo e abrir o painel inicial', () => {
-    const savedProgress = createEmptyProgress()
+  it('deve começar do zero quando o progresso salvo é de outra conta', async () => {
+    saveAccountProgress((progress) => {
+      progress.profileName = 'Ana'
+      progress.profileEmail = 'ana@example.com'
+      progress.xp = 80
+    })
 
-    savedProgress.profileName = 'Bruno'
+    renderApp()
 
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify(savedProgress),
+    await waitFor(() => {
+      const saved = readSavedProgress()
+      expect(saved.profileName).toBe(account.nome)
+      expect(saved.profileEmail).toBe(account.email)
+      expect(saved.xp).toBe(0)
+    })
+  })
+
+  it('deve encerrar a sessão da conta ao sair do perfil', () => {
+    const onAccountSignOut = renderApp()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Sair do perfil neste dispositivo' }),
     )
 
-    render(<App />)
-
-    expect(
-      screen.getByRole('heading', {
-        name: 'Olá, Bruno.',
-      }),
-    ).toBeTruthy()
+    expect(onAccountSignOut).toHaveBeenCalledTimes(1)
   })
 
   it('deve comparar três pares de prompts e registrar o resultado da prática', async () => {
-    const savedProgress = createEmptyProgress()
-    savedProgress.profileName = 'Bruno'
-    localStorage.setItem(storageKey, JSON.stringify(savedProgress))
+    saveAccountProgress()
 
-    render(<App />)
+    renderApp()
+    openDashboard()
 
     fireEvent.click(
       screen.getByRole('button', { name: /Compare prompts/ }),
@@ -271,9 +143,7 @@ describe('App', () => {
     ).toBeTruthy()
 
     await waitFor(() => {
-      const saved = JSON.parse(
-        localStorage.getItem(storageKey) ?? 'null',
-      )
+      const saved = readSavedProgress()
       expect(saved.practiceResults['compare-study-plan'].score).toBe(1)
       expect(saved.practiceResults['compare-source-synthesis'].score).toBe(1)
       expect(saved.practiceResults['compare-project-update'].score).toBe(1)
@@ -282,11 +152,10 @@ describe('App', () => {
   })
 
   it('deve avaliar o checklist de verificação e registrar o feedback', async () => {
-    const savedProgress = createEmptyProgress()
-    savedProgress.profileName = 'Bruno'
-    localStorage.setItem(storageKey, JSON.stringify(savedProgress))
+    saveAccountProgress()
 
-    render(<App />)
+    renderApp()
+    openDashboard()
 
     fireEvent.click(
       screen.getByRole('button', { name: /Verifique uma resposta de IA/ }),
@@ -311,9 +180,7 @@ describe('App', () => {
     ).toBeTruthy()
 
     await waitFor(() => {
-      const saved = JSON.parse(
-        localStorage.getItem(storageKey) ?? 'null',
-      )
+      const saved = readSavedProgress()
       expect(saved.practiceResults['verify-frequency-claim'].score).toBe(4)
       expect(saved.practiceResults['verify-frequency-claim'].total).toBe(4)
       expect(saved.xp).toBe(12)
@@ -321,11 +188,9 @@ describe('App', () => {
   })
 
   it('deve atualizar o dashboard após a conclusão de um módulo', async () => {
-    const savedProgress = createEmptyProgress()
-    savedProgress.profileName = 'Bruno'
-    localStorage.setItem(storageKey, JSON.stringify(savedProgress))
+    saveAccountProgress()
 
-    render(<App />)
+    renderApp()
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Trilha de aprendizagem' }),
@@ -345,9 +210,7 @@ describe('App', () => {
     )
 
     await waitFor(() => {
-      const saved = JSON.parse(
-        localStorage.getItem(storageKey) ?? 'null',
-      )
+      const saved = readSavedProgress()
       expect(saved.completedLessons).toContain('generative-ai')
       expect(saved.xp).toBe(25)
     })
@@ -355,32 +218,30 @@ describe('App', () => {
     fireEvent.click(
       screen.getByRole('button', { name: /Voltar à trilha/ }),
     )
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Visão geral' }),
-    )
+    openDashboard()
 
     expect(screen.getByText(/1 de \d+ módulos/)).toBeTruthy()
     expect(screen.getByText('MÓDULOS CONCLUÍDOS')).toBeTruthy()
   })
 
   it('deve apresentar o resultado final consolidando quizzes e práticas', async () => {
-    const savedProgress = createEmptyProgress()
-    savedProgress.profileName = 'Bruno'
-    savedProgress.quizResults.hallucinations = {
-      score: 2,
-      total: 3,
-      completedAt: '2026-11-16T12:00:00.000Z',
-      incorrectTopics: ['Checagem de fontes'],
-    }
-    savedProgress.practiceResults['verify-frequency-claim'] = {
-      score: 3,
-      total: 4,
-      completedAt: '2026-11-16T12:05:00.000Z',
-      correctIds: ['source', 'date', 'calculation'],
-    }
-    localStorage.setItem(storageKey, JSON.stringify(savedProgress))
+    saveAccountProgress((progress) => {
+      progress.quizResults.hallucinations = {
+        score: 2,
+        total: 3,
+        completedAt: '2026-11-16T12:00:00.000Z',
+        incorrectTopics: ['Checagem de fontes'],
+      }
+      progress.practiceResults['verify-frequency-claim'] = {
+        score: 3,
+        total: 4,
+        completedAt: '2026-11-16T12:05:00.000Z',
+        correctIds: ['source', 'date', 'calculation'],
+      }
+    })
 
-    render(<App />)
+    renderApp()
+    openDashboard()
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Ver resultado final' }),
@@ -397,5 +258,4 @@ describe('App', () => {
     expect(screen.getByText(/Avaliação/)).toBeTruthy()
     expect(screen.getByText('Verificação de informações')).toBeTruthy()
   })
-
 })
