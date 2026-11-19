@@ -57,7 +57,8 @@ export function createApi(storeOrPromise) {
         return send(200, { conteudo: content })
       }
       if (['/api/usuarios', '/api/login'].includes(path) && req.method === 'POST') {
-        const key = req.socket.remoteAddress || 'local'
+        // Na Vercel o endereço da conexão é do proxy; o IP do visitante vem em x-real-ip.
+        const key = (process.env.VERCEL && req.headers['x-real-ip']) || req.socket.remoteAddress || 'local'
         const now = Date.now()
         for (const [ip, entry] of attempts) if (entry.until < now) attempts.delete(ip)
         const attempt = attempts.get(key) || { count: 0, until: now + 60000 }
