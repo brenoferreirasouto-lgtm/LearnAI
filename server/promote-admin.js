@@ -7,12 +7,12 @@ if (!email) {
   console.error('Use: npm run tornar-admin -- email@exemplo.com')
   process.exit(1)
 }
-const store = openDatabase()
+const store = await openDatabase()
 try {
-  const user = store.promoteToAdmin(email)
+  const user = await store.promoteToAdmin(email)
   if (!user) throw new Error('Cadastro não encontrado. Crie a conta pelo site antes de promovê-la.')
   console.log(`${user.email} agora é administrador. Entre no site selecionando o perfil Administrador.`)
 } catch (error) {
   console.error(error.message)
   process.exitCode = 1
-} finally { store.db.close() }
+} finally { store.close() }

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { validateRegistration } from '../shared/registration.js'
 import { hashPassword, verifyPassword } from './passwords.js'
 import { defaultSiteContent } from '../shared/site-content.js'
+import { isDuplicateEmail } from './database.js'
 
 async function readBody(req) {
   let body = ''
@@ -12,7 +13,11 @@ async function readBody(req) {
   return JSON.parse(body)
 }
 
-export function createApi(store) {
+/** Recebe o store do banco, ou a promessa dele, e devolve o middleware da API. */
+export function createApi(storeOrPromise) {
+  const ready = Promise.resolve(storeOrPromise)
+  // Se o banco não abrir, cada requisição responde 500, sem derrubar o processo.
+  ready.catch(() => {})
   const attempts = new Map()
   const dummyHash = hashPassword(randomBytes(32).toString('hex'))
   return async (req, res, next) => {
@@ -24,18 +29,19 @@ export function createApi(store) {
     const token = /(?:^|;\s*)learnai_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1] || ''
     const cookie = (value, age) => res.setHeader('Set-Cookie', `learnai_session=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${age}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`)
     try {
+      const store = await ready
       if (req.method !== 'GET' && req.headers.origin && req.headers.origin !== `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`)
         return send(403, { error: 'Origem da solicitação não permitida.' })
       if (path === '/api/sessao' && req.method === 'GET')
-        return send(200, { usuario: store.session(token) || null })
+        return send(200, { usuario: (await store.session(token)) || null })
       if (path === '/api/sessao' && req.method === 'DELETE') {
-        store.signOut(token); cookie('', 0)
+        await store.signOut(token); cookie('', 0)
         return send(200, { mensagem: 'Você saiu do perfil.' })
       }
       if (path === '/api/conteudo' && req.method === 'GET')
-        return send(200, { conteudo: store.readContent() || defaultSiteContent })
+        return send(200, { conteudo: (await store.readContent()) || defaultSiteContent })
       if (path === '/api/admin/conteudo' && req.method === 'PUT') {
-        const user = store.session(token)
+        const user = await store.session(token)
         if (!user) return send(401, { error: 'Entre na sua conta para continuar.' })
         if (user.perfil !== 'admin') return send(403, { error: 'Acesso permitido apenas para administradores.' })
         let input
@@ -47,7 +53,7 @@ export function createApi(store) {
             return send(400, { error: `Preencha os títulos (até 100 caracteres) e descrições (até 1000 caracteres).` })
           content[key] = input[key].trim()
         }
-        store.saveContent(content)
+        await store.saveContent(content)
         return send(200, { conteudo: content })
       }
       if (['/api/usuarios', '/api/login'].includes(path) && req.method === 'POST') {
@@ -70,36 +76,26 @@ export function createApi(store) {
         if (typeof senha !== 'string' || senha.length < 8 || senha.length > 128)
           return send(400, { error: 'A senha deve ter entre 8 e 128 caracteres.' })
         if (path === '/api/login') {
-          const credentials = store.findCredentials(data.email)
+          const credentials = await store.findCredentials(data.email)
           const valid = await verifyPassword(senha, credentials?.senha_hash || await dummyHash)
           if (!credentials?.senha_hash || !valid) return send(401, { error: 'E-mail ou senha incorretos. Se sua conta foi criada sem senha, defina a primeira senha pelo terminal do projeto.' })
           const selectedRole = input.perfil || 'usuario'
           if (!['usuario', 'admin'].includes(selectedRole) || selectedRole !== credentials.perfil)
             return send(403, { error: 'Este cadastro não possui o perfil selecionado.' })
           const newToken = randomBytes(32).toString('hex')
-          store.db.exec('BEGIN IMMEDIATE')
-          try {
-            store.signOut(token); store.createSession(newToken, credentials.id)
-            store.db.exec('COMMIT')
-          } catch (error) { store.db.exec('ROLLBACK'); throw error }
+          await store.replaceSession(token, newToken, credentials.id)
           cookie(newToken, 30 * 86400)
           const { senha_hash, ...usuario } = credentials
           return send(200, { usuario })
         }
         const hash = await hashPassword(senha)
-        store.db.exec('BEGIN IMMEDIATE')
+        const newToken = randomBytes(32).toString('hex')
         try {
-          const usuario = store.createUser(data.nome, data.email, hash)
-          const newToken = randomBytes(32).toString('hex')
-          store.signOut(token)
-          store.createSession(newToken, usuario.id)
-          store.db.exec('COMMIT')
+          const usuario = await store.registerWithSession(data.nome, data.email, hash, newToken, token)
           cookie(newToken, 30 * 86400)
           return send(201, { usuario })
         } catch (error) {
-          store.db.exec('ROLLBACK')
-          if (error.code === 'ERR_SQLITE_ERROR' && error.errcode === 2067)
-            return send(409, { error: 'E-mail já cadastrado' })
+          if (isDuplicateEmail(error)) return send(409, { error: 'E-mail já cadastrado' })
           throw error
         }
       }
