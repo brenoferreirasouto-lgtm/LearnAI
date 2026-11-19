@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openDatabase } from './database.js'
 import { createApi } from './routes.js'
-import { DatabaseSync } from 'node:sqlite'
+import { createClient } from '@libsql/client'
+import { pathToFileURL } from 'node:url'
 import { hashPassword } from './passwords.js'
 
 const cleanup = []
@@ -15,8 +16,8 @@ it('valida, normaliza, persiste usuários e sessões e impede duplicidade após 
   const dir = mkdtempSync(join(tmpdir(), 'learnai-'))
   cleanup.push(() => rmSync(dir, { recursive: true, force: true }))
   const filename = join(dir, 'test.sqlite')
-  let store = openDatabase(filename)
-  cleanup.push(() => store.db.close())
+  let store = await openDatabase(filename)
+  cleanup.push(() => store.close())
   let api = createApi(store)
   const server = createServer((req, res) => api(req, res, () => { res.statusCode = 404; res.end() }))
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -32,9 +33,9 @@ it('valida, normaliza, persiste usuários e sessões e impede duplicidade após 
   const user = (await created.json()).usuario
   expect(user).toMatchObject({ nome: 'Ana', email: 'ana@example.com' })
   expect(user.senha_hash).toBeUndefined()
-  expect(store.findCredentials(user.email).senha_hash).not.toContain('senha-teste-123')
+  expect((await store.findCredentials(user.email)).senha_hash).not.toContain('senha-teste-123')
   const cookie = created.headers.get('set-cookie').split(';')[0]
-  store.db.close(); store = openDatabase(filename)
+  store.close(); store = await openDatabase(filename)
   api = createApi(store)
   const session = await fetch(`${url}/api/sessao`, { headers: { cookie } })
   expect((await session.json()).usuario.id).toBe(user.id)
@@ -49,14 +50,14 @@ it('valida, normaliza, persiste usuários e sessões e impede duplicidade após 
   expect(loggedIn.status).toBe(200)
   expect((await loggedIn.json()).usuario).toEqual(user)
   const loginCookie = loggedIn.headers.get('set-cookie').split(';')[0]
-  store.db.close(); store = openDatabase(filename)
+  store.close(); store = await openDatabase(filename)
   api = createApi(store)
   const restored = await fetch(`${url}/api/sessao`, { headers: { cookie: loginCookie } })
   expect((await restored.json()).usuario).toEqual(user)
   expect(loggedIn.headers.get('set-cookie')).toContain('HttpOnly')
   expect((await register('Bruno', 'bruno@example.com')).status).toBe(201)
-  expect(store.db.prepare('SELECT count(*) AS total FROM usuarios').get().total).toBe(2)
-  expect(() => store.createUser('Ana', 'ana@example.com')).toThrow()
+  expect((await store.db.execute('SELECT count(*) AS total FROM usuarios')).rows[0].total).toBe(2)
+  await expect(store.createUser('Ana', 'ana@example.com')).rejects.toThrow()
   for (let index = 0; index < 20; index++) await register('', '')
   expect((await login(user.email, 'senha-teste-123')).status).toBe(429)
 })
@@ -65,15 +66,15 @@ it('migra contas antigas sem apagar usuários e permite definir a primeira senha
   const dir = mkdtempSync(join(tmpdir(), 'learnai-migration-'))
   cleanup.push(() => rmSync(dir, { recursive: true, force: true }))
   const filename = join(dir, 'old.sqlite')
-  const old = new DatabaseSync(filename)
-  old.exec(`CREATE TABLE usuarios (id INTEGER PRIMARY KEY, nome TEXT NOT NULL, email TEXT UNIQUE NOT NULL, criado_em TEXT DEFAULT CURRENT_TIMESTAMP);
+  const old = createClient({ url: pathToFileURL(filename).href })
+  await old.executeMultiple(`CREATE TABLE usuarios (id INTEGER PRIMARY KEY, nome TEXT NOT NULL, email TEXT UNIQUE NOT NULL, criado_em TEXT DEFAULT CURRENT_TIMESTAMP);
     INSERT INTO usuarios (nome, email) VALUES ('Bruno', 'bruno@bruno.com')`)
   old.close()
-  const store = openDatabase(filename)
-  cleanup.push(() => store.db.close())
-  const user = store.findCredentials('bruno@bruno.com')
+  const store = await openDatabase(filename)
+  cleanup.push(() => store.close())
+  const user = await store.findCredentials('bruno@bruno.com')
   expect(user.senha_hash).toBeNull()
-  store.setPassword(user.id, await hashPassword('nova-senha-segura'))
-  expect(store.findCredentials(user.email).id).toBe(user.id)
-  expect(store.findCredentials(user.email).senha_hash).toBeTruthy()
+  await store.resetPassword(user.id, await hashPassword('nova-senha-segura'))
+  expect((await store.findCredentials(user.email)).id).toBe(user.id)
+  expect((await store.findCredentials(user.email)).senha_hash).toBeTruthy()
 })

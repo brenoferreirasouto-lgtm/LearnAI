@@ -1,12 +1,32 @@
-import { DatabaseSync } from 'node:sqlite'
+import { createClient } from '@libsql/client'
 import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
-export function openDatabase(filename = process.env.DATABASE_PATH || resolve('data/learnai.sqlite')) {
-  if (filename !== ':memory:') mkdirSync(dirname(filename), { recursive: true })
-  const db = new DatabaseSync(filename)
-  db.exec(`PRAGMA foreign_keys = ON;
-    PRAGMA busy_timeout = 5000;
+const SESSION_DAYS = 30
+
+/**
+ * Escolhe o banco:
+ * - `openDatabase(':memory:')`: banco em memória, usado nos testes;
+ * - `openDatabase('caminho.sqlite')`: arquivo local;
+ * - sem argumento: Turso, se TURSO_DATABASE_URL estiver definida (produção na Vercel);
+ *   senão o arquivo de DATABASE_PATH ou data/learnai.sqlite (desenvolvimento).
+ */
+function clientConfig(filename) {
+  if (filename === ':memory:') return { url: ':memory:' }
+  if (!filename && process.env.TURSO_DATABASE_URL)
+    return { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
+  const path = resolve(filename || process.env.DATABASE_PATH || 'data/learnai.sqlite')
+  mkdirSync(dirname(path), { recursive: true })
+  return { url: pathToFileURL(path).href }
+}
+
+function plain(row) {
+  return row ? { ...row } : undefined
+}
+
+async function migrate(db) {
+  await db.executeMultiple(`PRAGMA foreign_keys = ON;
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY,
       nome TEXT NOT NULL CHECK(length(trim(nome)) BETWEEN 1 AND 60),
@@ -17,37 +37,95 @@ export function openDatabase(filename = process.env.DATABASE_PATH || resolve('da
       token TEXT PRIMARY KEY,
       usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
       expira_em INTEGER NOT NULL
-    );`)
-  if (!db.prepare('PRAGMA table_info(usuarios)').all().some(column => column.name === 'senha_hash'))
-    db.exec('ALTER TABLE usuarios ADD COLUMN senha_hash TEXT')
-  if (!db.prepare('PRAGMA table_info(usuarios)').all().some(column => column.name === 'perfil'))
-    db.exec("ALTER TABLE usuarios ADD COLUMN perfil TEXT NOT NULL DEFAULT 'usuario' CHECK(perfil IN ('usuario', 'admin'))")
-  db.exec('CREATE TABLE IF NOT EXISTS conteudo_site (id INTEGER PRIMARY KEY CHECK(id = 1), dados TEXT NOT NULL)')
+    );
+    CREATE TABLE IF NOT EXISTS conteudo_site (id INTEGER PRIMARY KEY CHECK(id = 1), dados TEXT NOT NULL);`)
+  const columns = (await db.execute('PRAGMA table_info(usuarios)')).rows.map(column => column.name)
+  if (!columns.includes('senha_hash'))
+    await db.execute('ALTER TABLE usuarios ADD COLUMN senha_hash TEXT')
+  if (!columns.includes('perfil'))
+    await db.execute("ALTER TABLE usuarios ADD COLUMN perfil TEXT NOT NULL DEFAULT 'usuario' CHECK(perfil IN ('usuario', 'admin'))")
+}
+
+export function isDuplicateEmail(error) {
+  return error?.rawCode === 2067 || error?.extendedCode === 'SQLITE_CONSTRAINT_UNIQUE'
+}
+
+export async function openDatabase(filename) {
+  const db = createClient(clientConfig(filename))
+  await migrate(db)
+  const newSession = (token, userIdSql, args) => ({
+    sql: `INSERT INTO sessoes (token, usuario_id, expira_em) VALUES (?, ${userIdSql}, ?)`,
+    args: [token, ...args, Date.now() + SESSION_DAYS * 86400000],
+  })
+  const dropExpired = () => ({ sql: 'DELETE FROM sessoes WHERE expira_em < ?', args: [Date.now()] })
   return {
     db,
-    findCredentials(email) { return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email) },
-    setPassword(id, hash) { db.prepare('UPDATE usuarios SET senha_hash = ? WHERE id = ?').run(hash, id) },
-    promoteToAdmin(email) {
-      return db.prepare("UPDATE usuarios SET perfil = 'admin' WHERE email = ? RETURNING id, nome, email, perfil").get(email) ?? null
+    close() { db.close() },
+    async findCredentials(email) {
+      return plain((await db.execute({ sql: 'SELECT * FROM usuarios WHERE email = ?', args: [email] })).rows[0])
     },
-    createUser(nome, email, hash = null) {
-      return db.prepare('INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?) RETURNING id, nome, email, criado_em, perfil').get(nome, email, hash)
+    /** Troca a senha e encerra as sessões abertas da conta, numa única transação. */
+    async resetPassword(id, hash) {
+      await db.batch([
+        { sql: 'UPDATE usuarios SET senha_hash = ? WHERE id = ?', args: [hash, id] },
+        { sql: 'DELETE FROM sessoes WHERE usuario_id = ?', args: [id] },
+      ], 'write')
     },
-    createSession(token, id) {
-      db.prepare('DELETE FROM sessoes WHERE expira_em < ?').run(Date.now())
-      db.prepare('INSERT INTO sessoes VALUES (?, ?, ?)').run(token, id, Date.now() + 30 * 86400000)
+    async promoteToAdmin(email) {
+      const result = await db.execute({ sql: "UPDATE usuarios SET perfil = 'admin' WHERE email = ? RETURNING id, nome, email, perfil", args: [email] })
+      return plain(result.rows[0]) ?? null
     },
-    session(token) {
-      return db.prepare(`SELECT u.id, u.nome, u.email, u.criado_em, u.perfil FROM usuarios u JOIN sessoes s ON s.usuario_id = u.id
-        WHERE s.token = ? AND s.expira_em > ?`).get(token, Date.now())
+    async createUser(nome, email, hash = null) {
+      const result = await db.execute({
+        sql: 'INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?) RETURNING id, nome, email, criado_em, perfil',
+        args: [nome, email, hash],
+      })
+      return plain(result.rows[0])
     },
-    signOut(token) { db.prepare('DELETE FROM sessoes WHERE token = ?').run(token) },
-    readContent() {
-      const row = db.prepare('SELECT dados FROM conteudo_site WHERE id = 1').get()
+    /** Cria o usuário e já abre a sessão dele, encerrando a anterior, numa única transação. */
+    async registerWithSession(nome, email, hash, newToken, previousToken) {
+      const [, created] = await db.batch([
+        { sql: 'DELETE FROM sessoes WHERE token = ?', args: [previousToken] },
+        {
+          sql: 'INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?) RETURNING id, nome, email, criado_em, perfil',
+          args: [nome, email, hash],
+        },
+        dropExpired(),
+        newSession(newToken, '(SELECT id FROM usuarios WHERE email = ?)', [email]),
+      ], 'write')
+      return plain(created.rows[0])
+    },
+    async createSession(token, id) {
+      await db.batch([dropExpired(), newSession(token, '?', [id])], 'write')
+    },
+    /** Encerra a sessão anterior e abre uma nova para a conta, numa única transação. */
+    async replaceSession(previousToken, newToken, id) {
+      await db.batch([
+        { sql: 'DELETE FROM sessoes WHERE token = ?', args: [previousToken] },
+        dropExpired(),
+        newSession(newToken, '?', [id]),
+      ], 'write')
+    },
+    async session(token) {
+      const result = await db.execute({
+        sql: `SELECT u.id, u.nome, u.email, u.criado_em, u.perfil FROM usuarios u JOIN sessoes s ON s.usuario_id = u.id
+          WHERE s.token = ? AND s.expira_em > ?`,
+        args: [token, Date.now()],
+      })
+      return plain(result.rows[0])
+    },
+    async signOut(token) {
+      await db.execute({ sql: 'DELETE FROM sessoes WHERE token = ?', args: [token] })
+    },
+    async readContent() {
+      const row = (await db.execute('SELECT dados FROM conteudo_site WHERE id = 1')).rows[0]
       return row ? JSON.parse(row.dados) : null
     },
-    saveContent(data) {
-      db.prepare('INSERT INTO conteudo_site (id, dados) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET dados = excluded.dados').run(JSON.stringify(data))
+    async saveContent(data) {
+      await db.execute({
+        sql: 'INSERT INTO conteudo_site (id, dados) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET dados = excluded.dados',
+        args: [JSON.stringify(data)],
+      })
     },
   }
 }
