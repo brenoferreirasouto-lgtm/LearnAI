@@ -34,6 +34,7 @@ import {
   type QuizResult,
 } from "./lib/progress"
 import { calculateOverallResult } from "./lib/results"
+import { recommendNextLesson } from "./lib/recommendations"
 
 type Page = "welcome" | "dashboard" | "path" | "lesson" | "quiz" | "placement" | "studio" | "projects" | "journey" | "plus" | "profile" | "prompt-practice" | "verification-practice" | "results"
 type PracticeKind = "compare" | "verify"
@@ -74,24 +75,6 @@ const navigation: NavigationItem[] = [
   { id: "journey", label: "Minha evolução", icon: "award" },
   { id: "plus", label: "Learn AI Plus", icon: "target" },
 ]
-
-const quizToLesson: Record<string, string> = {
-  foundations: "generative-ai",
-  hallucinations: "limitations",
-  privacy: "privacy",
-  "prompt-comparison": "prompting",
-  verification: "verification",
-  "responsible-use": "responsible-use",
-  "advanced-prompting": "advanced-prompting",
-  "research-synthesis": "research-synthesis",
-  "professional-writing": "professional-writing",
-  "data-analysis": "data-analysis",
-  "software-development": "software-development",
-  "workflow-automation": "workflow-automation",
-  "ai-by-profession": "ai-by-profession",
-  "assistants-and-agents": "assistants-and-agents",
-  "integrative-project": "integrative-project",
-}
 
 const themeStorageKey = "learnai.theme.v1"
 const localSignOutStorageKey = "learnai.session.signed-out.v1"
@@ -1018,31 +1001,10 @@ function Dashboard({
       lessons.some((lesson) => lesson.id === progress.lastLessonId) &&
       !progress.completedLessons.includes(progress.lastLessonId),
   )
-  const recommendation = useMemo(() => {
-    const latestIncorrect = Object.entries(progress.quizResults)
-      .sort((a, b) => b[1].completedAt.localeCompare(a[1].completedAt))
-      .find(([, result]) => result.incorrectTopics.length > 0)
-    const reviewId = latestIncorrect ? quizToLesson[latestIncorrect[0]] : null
-    if (reviewId && !progress.completedLessons.includes(reviewId))
-      return lessons.find((lesson) => lesson.id === reviewId) ?? lessons[0]
-    const preferred =
-      progress.level === "Avançado"
-        ? "verification"
-        : progress.level === "Intermediário"
-          ? "prompting"
-          : "generative-ai"
-    return (
-      lessons.find(
-        (lesson) =>
-          lesson.id === preferred &&
-          !progress.completedLessons.includes(lesson.id),
-      ) ??
-      lessons.find(
-        (lesson) => !progress.completedLessons.includes(lesson.id),
-      ) ??
-      lessons[0]
-    )
-  }, [progress.quizResults, progress.completedLessons, progress.level])
+  const recommendation = useMemo(
+    () => recommendNextLesson(progress),
+    [progress.quizResults, progress.completedLessons, progress.level],
+  )
   const recentQuiz = Object.entries(progress.quizResults).sort((a, b) =>
     b[1].completedAt.localeCompare(a[1].completedAt),
   )[0]
