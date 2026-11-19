@@ -40,31 +40,8 @@ async function hashLocalPassword(password: string, saltHex?: string) {
   return { salt: toHex(salt), hash: toHex(new Uint8Array(bits)) }
 }
 
-async function ensureDemoUsers() {
-  const existing = readJson<LocalUser[]>(USERS_KEY, [])
-  if (existing.length > 0) return existing
-
-  const now = new Date().toISOString()
-  const demos = [
-    { id: 1, nome: 'Administrador Learn AI', email: 'admin@learnai.local', senha: 'AdminLearnAI!2026', perfil: 'admin' as const },
-    { id: 2, nome: 'Usuário de demonstração', email: 'usuario@learnai.local', senha: 'UsuarioLearnAI!2026', perfil: 'usuario' as const },
-  ]
-
-  const users: LocalUser[] = []
-  for (const demo of demos) {
-    const password = await hashLocalPassword(demo.senha)
-    users.push({
-      id: demo.id,
-      nome: demo.nome,
-      email: demo.email,
-      criado_em: now,
-      perfil: demo.perfil,
-      passwordSalt: password.salt,
-      passwordHash: password.hash,
-    })
-  }
-  writeJson(USERS_KEY, users)
-  return users
+function readUsers() {
+  return readJson<LocalUser[]>(USERS_KEY, [])
 }
 
 function publicUser(user: LocalUser): Usuario {
@@ -72,7 +49,7 @@ function publicUser(user: LocalUser): Usuario {
 }
 
 async function localAccountRequest(path: string, method: string, body?: unknown): Promise<RequestResult> {
-  const users = await ensureDemoUsers()
+  const users = readUsers()
   const sessionId = Number(localStorage.getItem(SESSION_KEY) || 0)
   const current = users.find(user => user.id === sessionId) ?? null
 
