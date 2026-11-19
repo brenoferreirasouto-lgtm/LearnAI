@@ -39,8 +39,9 @@ Para verificar: `npm test` e `npx tsc --noEmit`.
 - `server/routes.js`: POST `/api/usuarios`, POST `/api/login`, GET e DELETE `/api/sessao`.
 - `server/database.js`: consultas parametrizadas, tabela `usuarios` e sessões persistentes.
 - `server/vite-plugin.js`: API Node integrada ao servidor Vite.
+- `api/`: funções serverless da Vercel, uma por rota, que usam o mesmo `createApi`.
 
-SQLite foi escolhido por dispensar serviço ou credenciais adicionais. O arquivo `data/learnai.sqlite` é criado automaticamente e fica fora do Git. Não apague esse arquivo; faça backup dele para preservar os cadastros. `DATABASE_PATH` permite escolher outro caminho persistente.
+O banco é acessado pelo cliente libSQL (`@libsql/client`). Em desenvolvimento ele é um arquivo SQLite, que dispensa serviço ou credenciais: `data/learnai.sqlite` é criado automaticamente e fica fora do Git. Nos testes, o banco fica em memória. Em produção, o mesmo código usa um banco Turso (veja [Produção na Vercel](#produção-na-vercel)). Não apague esse arquivo; faça backup dele para preservar os cadastros. `DATABASE_PATH` permite escolher outro caminho persistente.
 A tabela `usuarios` contém `id`, `nome`, `email` UNIQUE em minúsculas e `criado_em`. Cadastro e sessão são gravados em uma transação. Duplicidade retorna HTTP 409 e a mensagem exata `E-mail já cadastrado`.
 
 O cookie HttpOnly identifica uma sessão de 30 dias, que sobrevive a recarga e reinício. Sair invalida a sessão no banco, sem excluir usuários, e abre a tela de login. Criar outro cadastro encerra a sessão e abre o formulário de cadastro vazio. A opção **Já tenho conta** permite entrar novamente com e-mail e senha.
@@ -59,6 +60,20 @@ Digite a senha e confirme (a entrada fica oculta). A ferramenta também serve pa
 O progresso de aprendizagem continua local. Nome e e-mail passam a ser persistidos no servidor; antigos cadastros exclusivos do localStorage não são migrados automaticamente.
 
 No desenvolvimento e no `vite preview`, o cadastro usa a API Node + SQLite. Em hospedagem estática como o Vercel, o cliente detecta a ausência dessa API e usa um fallback local no navegador para manter cadastro, login, bloqueio de e-mail duplicado e painel de demonstração funcionais. Nesse modo publicado, os dados ficam restritos ao navegador/dispositivo e não são sincronizados entre usuários ou máquinas.
+
+## Produção na Vercel
+
+No deploy, cada arquivo de `api/` vira uma função serverless que atende uma rota (`/api/sessao`, `/api/conteudo`, `/api/usuarios`, `/api/login` e `/api/admin/conteudo`) com o mesmo `createApi` do servidor de desenvolvimento. Os dados ficam num banco Turso, que é libSQL hospedado:
+
+1. No projeto da Vercel, na aba **Storage**, crie um banco Turso pelo Marketplace e conecte-o aos ambientes Production e Preview. O código lê a conexão de `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN`.
+2. Faça um novo deploy. As tabelas são criadas na primeira execução das funções.
+3. Para ter um administrador em produção, cadastre a conta pelo site e promova-a do seu computador, apontando para o mesmo banco:
+
+```bash
+TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run tornar-admin -- admin@exemplo.com
+```
+
+Sem `TURSO_DATABASE_URL`, as funções respondem erro 500 e o log da Vercel diz o que falta configurar.
 
 ## Demonstração
 

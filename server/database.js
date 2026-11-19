@@ -16,6 +16,8 @@ function clientConfig(filename) {
   if (filename === ':memory:') return { url: ':memory:' }
   if (!filename && process.env.TURSO_DATABASE_URL)
     return { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
+  if (!filename && process.env.VERCEL)
+    throw new Error('Configure TURSO_DATABASE_URL e TURSO_AUTH_TOKEN no projeto da Vercel.')
   const path = resolve(filename || process.env.DATABASE_PATH || 'data/learnai.sqlite')
   mkdirSync(dirname(path), { recursive: true })
   return { url: pathToFileURL(path).href }
