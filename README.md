@@ -33,6 +33,8 @@ Para rodar os mesmos testes de sistema contra o deploy publicado, defina `E2E_BA
 
 Os testes de sistema ficam em `tests/e2e/` e cobrem as histórias F01, F05, F06, F07, F08, F09, F10, F13, F14 e F15. Os dois conjuntos rodam no GitHub Actions a cada push e pull request para a `main` (`.github/workflows/testes.yml`).
 
+Para contribuir (branches, padrão de commit, pull requests e revisão), leia o [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Sobre o projeto
 
 O **Learn AI** é um projeto desenvolvido para a disciplina de **Fundamentos de Desenvolvimento de Software (FDS)**.
