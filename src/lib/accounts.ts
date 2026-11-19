@@ -106,7 +106,7 @@ async function localAccountRequest(path: string, method: string, body?: unknown)
   if (path === '/api/usuarios' && method === 'POST') {
     const input = body as Record<string, unknown> | undefined
     const data = validateRegistration(input)
-    if (data.error) throw new Error(data.error)
+    if (data.error !== undefined) throw new Error(data.error)
     const senha = input?.senha
     if (typeof senha !== 'string' || senha.length < 8 || senha.length > 128)
       throw new Error('A senha deve ter entre 8 e 128 caracteres.')
@@ -131,7 +131,7 @@ async function localAccountRequest(path: string, method: string, body?: unknown)
   if (path === '/api/login' && method === 'POST') {
     const input = body as Record<string, unknown> | undefined
     const data = validateRegistration({ ...input, nome: 'Login' })
-    if (data.error) throw new Error(data.error)
+    if (data.error !== undefined) throw new Error(data.error)
     const senha = input?.senha
     if (typeof senha !== 'string' || senha.length < 8 || senha.length > 128)
       throw new Error('A senha deve ter entre 8 e 128 caracteres.')
