@@ -346,12 +346,16 @@ A prática contribuiu para revisão conjunta das soluções, compartilhamento de
 
 ### 🟣 Sprint 03
 
-| Dupla | História | O que a dupla implementou | Aprendizados |
-|:-----:|:---------|:--------------------------|:-------------|
-| Breno + Vinicius | *F12* — Quiz de avaliação do aprendizado | Quiz final para avaliar o que o estudante aprendeu ao longo da trilha | Aprendemos a consolidar os conteúdos estudados e a testar a lógica de pontuação e avaliação. |
-| João + Pedro | *F13* — Sistema de feedback dos exercícios | Explicação exibida após cada exercício, para o estudante entender seus erros | Aprendemos a fornecer feedback contextualizado e a tratar respostas corretas e incorretas de forma diferente. |
-| Bruno + Breno | *F14* — Menu interativo com todas as funcionalidades | Menu central de navegação, com acesso a todas as funcionalidades da plataforma | Aprendemos a organizar a navegação entre telas, padronizar os componentes e resolver conflitos durante a integração. |
-| Vinicius + João | *F15* — Cadastro de usuário | Criação de conta para o estudante acompanhar seu aprendizado | Aprendemos a validar dados de cadastro, organizar as informações do usuário e testar o fluxo de criação de conta. |
+Relato refeito a partir do histórico do Git (issue #40). A versão anterior listava duplas que os commits não confirmam; cada linha abaixo aponta o commit ou PR que comprova a autoria.
+
+| História | Quem fez, segundo o Git | Evidência | Uso de IA |
+|:---------|:------------------------|:----------|:----------|
+| *F12* — Quiz de avaliação do aprendizado | Bruno | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) (21/10), integrado no [PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18) | Faz parte da versão completa do site gerada com apoio do Codex (branch `codex/site-completo-para-avaliacao`) |
+| *F13* — Sistema de feedback dos exercícios | Bruno; testes de sistema por Vinicius | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) ([PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18)); testes no commit [`49497cc`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/49497cc) (17/11) | Código da versão gerada com apoio do Codex; testes escritos com apoio do Claude (`Co-authored-by` no commit) |
+| *F14* — Menu interativo com todas as funcionalidades | Bruno; testes de sistema por Vinicius | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) ([PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18)); testes no commit [`49497cc`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/49497cc) (17/11) | Código da versão gerada com apoio do Codex; testes escritos com apoio do Claude (`Co-authored-by` no commit) |
+| *F15* — Cadastro de usuário | Bruno: cadastro com banco, login com senha, perfis, testes e deploy; Vinicius: primeiros testes de sistema | Commits de Bruno em 16 e 17/11 ([`80f400e`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/80f400e), [`814cab5`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/814cab5), [`c0fd1b0`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/c0fd1b0), [`e4c6e0e`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/e4c6e0e), [`9ccabbe`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/9ccabbe)), integrados no [PR #31](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/31); testes no commit [`49497cc`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/49497cc) | Testes de sistema escritos com apoio do Claude (`Co-authored-by` no commit) |
+
+Os testes de sistema de F12 e as correções da entrega final (issues #33 a #43) estão nos pull requests abertos a partir de 19/11.
 
 ---
 ### Uso de Inteligência Artificial no projeto
