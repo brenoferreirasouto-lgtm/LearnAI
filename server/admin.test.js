@@ -39,3 +39,15 @@ it('protege edição por perfil e publica apenas conteúdo válido salvo pelo ad
     store.db.close()
   }
 })
+
+it('promove a administrador apenas uma conta já cadastrada', () => {
+  const store = openDatabase(':memory:')
+  try {
+    expect(store.promoteToAdmin('ninguem@example.com')).toBeNull()
+    store.createUser('Pessoa', 'pessoa@example.com', 'hash-qualquer')
+    expect(store.promoteToAdmin('pessoa@example.com').perfil).toBe('admin')
+    expect(store.findCredentials('pessoa@example.com').perfil).toBe('admin')
+  } finally {
+    store.db.close()
+  }
+})
