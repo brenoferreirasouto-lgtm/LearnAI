@@ -7,7 +7,7 @@ import { hashPassword } from './passwords.js'
 import { defaultSiteContent } from '../shared/site-content.js'
 
 it('protege edição por perfil e publica apenas conteúdo válido salvo pelo admin', async () => {
-  const store = openDatabase(':memory:')
+  const store = await openDatabase(':memory:')
   const api = createApi(store)
   const server = createServer((req, res) => api(req, res, () => res.end()))
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -21,8 +21,8 @@ it('protege edição por perfil e publica apenas conteúdo válido salvo pelo ad
     const userCookie = registered.headers.get('set-cookie').split(';')[0]
     expect((await request('/api/admin/conteudo', 'PUT', defaultSiteContent, userCookie)).status).toBe(403)
     expect((await request('/api/login', 'POST', { email: 'pessoa@example.com', senha: 'senha-segura123', perfil: 'admin' })).status).toBe(403)
-    const admin = store.createUser('Admin', 'admin@example.com', await hashPassword('admin-seguro123'))
-    store.db.prepare("UPDATE usuarios SET perfil = 'admin' WHERE id = ?").run(admin.id)
+    const admin = await store.createUser('Admin', 'admin@example.com', await hashPassword('admin-seguro123'))
+    await store.promoteToAdmin(admin.email)
     expect((await request('/api/login', 'POST', { email: admin.email, senha: 'admin-seguro123', perfil: 'usuario' })).status).toBe(403)
     const loggedIn = await request('/api/login', 'POST', { email: admin.email, senha: 'admin-seguro123', perfil: 'admin' })
     expect((await loggedIn.json()).usuario.perfil).toBe('admin')
@@ -31,23 +31,23 @@ it('protege edição por perfil e publica apenas conteúdo válido salvo pelo ad
     const updated = { ...defaultSiteContent, titulo: 'Novo título do Learn AI' }
     expect((await request('/api/admin/conteudo', 'PUT', updated, adminCookie)).status).toBe(200)
     expect((await (await request('/api/conteudo')).json()).conteudo).toEqual(updated)
-    expect(store.readContent()).toEqual(updated)
-    store.db.prepare("UPDATE usuarios SET perfil = 'usuario' WHERE id = ?").run(admin.id)
+    expect(await store.readContent()).toEqual(updated)
+    await store.db.execute({ sql: "UPDATE usuarios SET perfil = 'usuario' WHERE id = ?", args: [admin.id] })
     expect((await request('/api/admin/conteudo', 'PUT', defaultSiteContent, adminCookie)).status).toBe(403)
   } finally {
     await new Promise(resolve => server.close(resolve))
-    store.db.close()
+    store.close()
   }
 })
 
-it('promove a administrador apenas uma conta já cadastrada', () => {
-  const store = openDatabase(':memory:')
+it('promove a administrador apenas uma conta já cadastrada', async () => {
+  const store = await openDatabase(':memory:')
   try {
-    expect(store.promoteToAdmin('ninguem@example.com')).toBeNull()
-    store.createUser('Pessoa', 'pessoa@example.com', 'hash-qualquer')
-    expect(store.promoteToAdmin('pessoa@example.com').perfil).toBe('admin')
-    expect(store.findCredentials('pessoa@example.com').perfil).toBe('admin')
+    expect(await store.promoteToAdmin('ninguem@example.com')).toBeNull()
+    await store.createUser('Pessoa', 'pessoa@example.com', 'hash-qualquer')
+    expect((await store.promoteToAdmin('pessoa@example.com')).perfil).toBe('admin')
+    expect((await store.findCredentials('pessoa@example.com')).perfil).toBe('admin')
   } finally {
-    store.db.close()
+    store.close()
   }
 })
