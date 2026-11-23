@@ -118,3 +118,29 @@ test('F14 — o menu dá acesso às áreas principais', async ({ page }) => {
     ).toBeVisible()
   }
 })
+
+test('F11 — errar um quiz faz o painel recomendar o módulo de revisão', async ({ page }) => {
+  // Sem nível nem quizzes, o painel sugere começar pela introdução.
+  await expect(page.locator('.next-lesson')).toContainText('IA generativa sem mistério')
+
+  await page.getByRole('button', { name: /Detecte alucinações/ }).first().click()
+  const answers = [
+    'Usar a citação porque parece completa',
+    'Conferir em fontes recentes e independentes',
+    'Tratá-la como hipótese e continuar verificando',
+  ]
+  for (const [index, answer] of answers.entries()) {
+    await page.getByRole('button', { name: new RegExp(answer) }).click()
+    await page.getByRole('button', { name: 'Conferir resposta' }).click()
+    await page
+      .getByRole('button', { name: index === answers.length - 1 ? 'Ver resultado' : 'Continuar' })
+      .click()
+  }
+
+  await expect(page.getByText('Temas para revisitar')).toBeVisible()
+  await page.getByRole('button', { name: 'Voltar à aprendizagem' }).click()
+
+  await expect(page.locator('.next-lesson')).toContainText('Limitações e alucinações')
+  const saved = await readProgress(page)
+  expect(saved.quizResults.hallucinations.incorrectTopics).toEqual(['Citações'])
+})
