@@ -4,7 +4,7 @@ import { createServer } from 'node:http'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { openDatabase } from './database.js'
+import { isDuplicateEmail, openDatabase } from './database.js'
 import { createApi } from './routes.js'
 import { createClient } from '@libsql/client'
 import { pathToFileURL } from 'node:url'
@@ -70,6 +70,17 @@ it('abre o mesmo banco novo em várias funções ao mesmo tempo sem falhar na mi
   for (const store of stores) cleanup.push(() => store.close())
   expect(await stores[1].readContent()).toBeNull()
   expect((await stores[2].createUser('Ana', 'ana@example.com')).perfil).toBe('usuario')
+})
+
+it('reconhece e-mail duplicado tanto no banco local quanto no Turso', () => {
+  // Banco local (arquivo): o SQLite informa o código estendido.
+  expect(isDuplicateEmail({ rawCode: 2067, extendedCode: 'SQLITE_CONSTRAINT_UNIQUE' })).toBe(true)
+  // Turso por HTTP: só o código genérico e a mensagem do SQLite.
+  const remote = Object.assign(new Error('SQLITE_CONSTRAINT: SQLite error: UNIQUE constraint failed: usuarios.email'), { code: 'SQLITE_CONSTRAINT' })
+  expect(isDuplicateEmail(remote)).toBe(true)
+  // Outras violações não viram "E-mail já cadastrado".
+  expect(isDuplicateEmail(Object.assign(new Error('SQLITE_CONSTRAINT: SQLite error: CHECK constraint failed: perfil'), { code: 'SQLITE_CONSTRAINT' }))).toBe(false)
+  expect(isDuplicateEmail(new Error('falha de rede'))).toBe(false)
 })
 
 it('migra contas antigas sem apagar usuários e permite definir a primeira senha', async () => {
