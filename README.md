@@ -1,21 +1,23 @@
 # Learn AI
 
-F15 — cadastro com banco SQLite: [como executar e roteiro de demonstração](docs/f15-cadastro-usuario.md).
+F15 — cadastro com banco (SQLite no desenvolvimento, Turso em produção): [como executar e roteiro de demonstração](docs/f15-cadastro-usuario.md).
 ![Learn AI - Nova identidade visual](./learn-ai-nova.png.png)
 
 > Plataforma web educacional para promover o letramento em Inteligência Artificial por meio de conteúdos curtos, situações práticas, exercícios interativos e acompanhamento de progresso.
 
 ## Deploy
 
-- **Aplicação publicada:** https://learn-ai-mu-pied.vercel.app
-- **Plataforma:** Vercel
-- **Status validado:** produção READY com resposta HTTP 200
-- **Origem do deploy:** branch `feature/f15-cadastro-usuario`, commit `25fd6c5`
-- **Validação antes da publicação:** 52/52 testes Vitest e 10/10 testes Playwright aprovados
+- **Aplicação publicada:** https://learnai-cesar.vercel.app
+- **Plataforma:** Vercel (projeto `learnai-cesar`). O site é o build do Vite; a API de cadastro roda como funções serverless em `api/`.
+- **Origem do deploy:** branch `main`. Cada merge na `main` publica a produção automaticamente; cada pull request ganha um preview.
+- **Banco de dados:** Turso (libSQL), ligado ao projeto pela integração da Vercel. Contas, senhas (hash scrypt) e sessões ficam no banco; a produção usa sempre o banco principal e os previews usam uma cópia separada.
+- **Conta de administrador:** criada pelo próprio site e promovida com `npm run tornar-admin` ([como fazer](docs/f15-cadastro-usuario.md)). Não há senha no repositório; o acesso de administrador foi enviado ao professor em particular.
+- **Validação:** 67 testes Vitest e 15 testes Playwright aprovados na `main`; os 15 testes de sistema também passam contra a URL publicada (`E2E_BASE_URL=https://learnai-cesar.vercel.app pnpm test:e2e`).
+- **Endereço anterior:** `learn-ai-mu-pied.vercel.app` era um projeto na conta de um integrante, publicado a partir da branch `feature/f15-cadastro-usuario` e sem a API de cadastro. Foi substituído pelo projeto acima, que publica a `main` com o banco.
 
 ## Produto oficial
 
-O produto do Learn AI é o **app React + Vite** (pasta `src/`). A produção atual foi validada na branch `feature/f15-cadastro-usuario`, enquanto essa versão aguarda integração à `main`.
+O produto do Learn AI é o **app React + Vite** (pasta `src/`), publicado a partir da `main`.
 
 O protótipo em Next.js das branches `feat/fase-*` foi descontinuado e serve apenas como histórico; nenhuma história é contabilizada a partir dele.
 
@@ -29,9 +31,11 @@ pnpm exec playwright install chromium
 pnpm test:e2e     # testes de sistema ponta a ponta (Playwright) sobre o build local
 ```
 
-Para rodar os mesmos testes de sistema contra o deploy publicado, defina `E2E_BASE_URL=https://learn-ai-mu-pied.vercel.app` antes de `pnpm test:e2e`.
+Para rodar os mesmos testes de sistema contra o deploy publicado, defina `E2E_BASE_URL=https://learnai-cesar.vercel.app` antes de `pnpm test:e2e`.
 
-Os testes de sistema ficam em `tests/e2e/` e cobrem as histórias F01, F05, F06, F07, F08, F09, F10, F13, F14 e F15. Os dois conjuntos rodam no GitHub Actions a cada push e pull request para a `main` (`.github/workflows/testes.yml`).
+Os testes de sistema ficam em `tests/e2e/` e cobrem as 15 histórias (F01 a F15). A checagem de tipos (`pnpm exec tsc --noEmit`) e os dois conjuntos de testes rodam no GitHub Actions a cada push e pull request para a `main` (`.github/workflows/testes.yml`).
+
+**Screencast dos testes** (checagem de tipos, Vitest com cobertura, Playwright e GitHub Actions): https://youtu.be/XnDWPVCBxqc
 
 Para contribuir (branches, padrão de commit, pull requests e revisão), leia o [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -350,12 +354,12 @@ Relato refeito a partir do histórico do Git (issue #40). A versão anterior lis
 
 | História | Quem fez, segundo o Git | Evidência | Uso de IA |
 |:---------|:------------------------|:----------|:----------|
-| *F12* — Quiz de avaliação do aprendizado | Bruno | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) (21/10), integrado no [PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18) | Faz parte da versão completa do site gerada com apoio do Codex (branch `codex/site-completo-para-avaliacao`) |
+| *F12* — Quiz de avaliação do aprendizado | Bruno | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) (21/10), integrado no [PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18) | Faz parte da versão completa do site gerada com apoio do Codex (branch `codex/site-completo-para-avaliacao`, hoje arquivada na tag `arquivo/codex/site-completo-para-avaliacao`) |
 | *F13* — Sistema de feedback dos exercícios | Bruno; testes de sistema por Vinicius | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) ([PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18)); testes no commit [`49497cc`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/49497cc) (17/11) | Código da versão gerada com apoio do Codex; testes escritos com apoio do Claude (`Co-authored-by` no commit) |
 | *F14* — Menu interativo com todas as funcionalidades | Bruno; testes de sistema por Vinicius | Commit [`7bc1287`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/7bc1287) ([PR #18](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/18)); testes no commit [`49497cc`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/49497cc) (17/11) | Código da versão gerada com apoio do Codex; testes escritos com apoio do Claude (`Co-authored-by` no commit) |
 | *F15* — Cadastro de usuário | Bruno: cadastro com banco, login com senha, perfis, testes e deploy; Vinicius: primeiros testes de sistema | Commits de Bruno em 16 e 17/11 ([`80f400e`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/80f400e), [`814cab5`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/814cab5), [`c0fd1b0`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/c0fd1b0), [`e4c6e0e`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/e4c6e0e), [`9ccabbe`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/9ccabbe)), integrados no [PR #31](https://github.com/brenoferreirasouto-lgtm/LearnAI/pull/31); testes no commit [`49497cc`](https://github.com/brenoferreirasouto-lgtm/LearnAI/commit/49497cc) | Testes de sistema escritos com apoio do Claude (`Co-authored-by` no commit) |
 
-Os testes de sistema de F12 e as correções da entrega final (issues #33 a #43) estão nos pull requests abertos a partir de 19/11.
+Os testes de sistema de F02, F03, F04 e F12 e as correções da entrega final (issues #33 a #43) foram integrados na `main` pelos [pull requests #44 a #57](https://github.com/brenoferreirasouto-lgtm/LearnAI/pulls?q=is%3Apr+is%3Amerged), todos revisados e aprovados por um colega antes do merge.
 
 ---
 ### Uso de Inteligência Artificial no projeto
@@ -366,7 +370,7 @@ Ferramentas utilizadas:
 |---|---|
 | **Figma Make** | Geração da base do app (React + Vite + Tailwind) e da identidade visual; os arquivos `AGENTS.md`, `CLAUDE.md` e `.figma/` vêm desse ambiente. |
 | **Claude (Anthropic) / Claude Code** | Apoio na implementação, revisão de código, escrita dos testes automatizados (Vitest e Playwright) e da documentação. |
-| **Codex (OpenAI)** | Apoio na geração da versão completa do site (branch `codex/site-completo-para-avaliacao`). |
+| **Codex (OpenAI)** | Apoio na geração da versão completa do site (branch `codex/site-completo-para-avaliacao`, arquivada na tag `arquivo/codex/site-completo-para-avaliacao`). |
 
 A equipe utilizou essas ferramentas de IA generativa como apoio ao desenvolvimento do Learn AI, principalmente para revisar ideias de implementação, analisar código, estruturar e revisar testes automatizados, organizar cenários de teste, melhorar a documentação técnica e apoiar o uso de Git/GitHub durante as entregas.
 
@@ -378,6 +382,18 @@ As sugestões produzidas por IA foram revisadas pela equipe antes de serem incor
 
 - [Issue #28 — Ajustar vite.config.ts para compatibilidade com configLoader native](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/28)
 - [Issue #30 — F15: cadastro não atende critérios de e-mail e duplicidade](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/30)
+- Entrega final — ajustes pedidos na avaliação da Sprint 03:
+  - [Issue #33 — Publicar a API de cadastro (F15) em produção](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/33)
+  - [Issue #34 — Remover as senhas de demonstração do código publicado](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/34)
+  - [Issue #35 — Corrigir os erros do tsc e incluir a checagem de tipos no CI](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/35)
+  - [Issue #36 — Criar testes de sistema para F02, F03, F04 e F12](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/36)
+  - [Issue #37 — Extrair a recomendação do F11 para um módulo e testá-la](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/37)
+  - [Issue #38 — Remover o componente Welcome, inalcançável no app](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/38)
+  - [Issue #39 — Corrigir os trechos desatualizados do README](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/39)
+  - [Issue #40 — Reescrever o relato de pares da Sprint 03 conforme o Git](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/40)
+  - [Issue #41 — Criar o CONTRIBUTING.md](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/41)
+  - [Issue #42 — Arquivar as branches do protótipo descontinuado](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/42)
+  - [Issue #43 — Criar o template de pull request](https://github.com/brenoferreirasouto-lgtm/LearnAI/issues/43)
 - Os issues são registrados quando os problemas são identificados durante a validação, mantendo o histórico de qualidade do projeto.
 <img width="1917" height="967" alt="image" src="https://github.com/user-attachments/assets/00e086a1-d4df-40be-a142-110421977816" />
 <img width="1965" alt="Issue #30 — F15 cadastro e duplicidade" src="https://github.com/user-attachments/assets/cb6c5b0f-e167-4110-8bad-3c84637927ba" />
@@ -401,8 +417,8 @@ A equipe utiliza um quadro Kanban para organizar o trabalho, priorizar o backlog
 
 **Ferramenta:** Trello
 
-**Link do Board:**  
-`https://trello.com/invite/b/6a9622309222e81119bfef2e/ATTIdfe49ca6ba86da893594140a907fd479BF1A75CC/kanban-learn-ai`
+**Link do Board (público):** https://trello.com/b/H73rMBcf/kanban-learn-ai  
+**Convite para entrar no board:** `https://trello.com/invite/b/6a9622309222e81119bfef2e/ATTIdfe49ca6ba86da893594140a907fd479BF1A75CC/kanban-learn-ai`
 
 ### Estrutura do Board
 
@@ -434,7 +450,8 @@ Concluído
 | **Entrega 02** | Modelagem, diagramas de atividades e prototipação |
 | **Sprint 01** | Implementação das primeiras funcionalidades |
 | **Sprint 02** | Evolução da aplicação e ampliação das funcionalidades |
-| **Sprint 03** | Consolidação do produto, testes de sistema, documentação e deploy ([app publicado](https://learn-ai-mu-pied.vercel.app)) |
+| **Sprint 03** | Consolidação do produto, testes de sistema, documentação e deploy |
+| **Entrega final** | API de cadastro em produção com banco Turso ([app publicado](https://learnai-cesar.vercel.app)), testes de sistema para as 15 histórias, issues e pull requests revisados |
 ---
 ## Learn AI
 
