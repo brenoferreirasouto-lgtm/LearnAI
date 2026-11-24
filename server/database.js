@@ -28,7 +28,11 @@ function plain(row) {
 }
 
 async function migrate(db) {
-  await db.executeMultiple(`PRAGMA foreign_keys = ON;
+  await db.execute('PRAGMA foreign_keys = ON')
+  // Na Vercel, várias funções abrem o banco ao mesmo tempo. Só lê o esquema (sem travar o banco)
+  // e cria as tabelas apenas se ainda faltar alguma.
+  const tables = new Set((await db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.map(row => row.name))
+  if (!['usuarios', 'sessoes', 'conteudo_site'].every(name => tables.has(name))) await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY,
       nome TEXT NOT NULL CHECK(length(trim(nome)) BETWEEN 1 AND 60),

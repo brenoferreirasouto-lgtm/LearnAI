@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterAll, beforeAll, expect, it } from 'vitest'
+import { afterAll, beforeAll, expect, it, vi } from 'vitest'
 import { createServer } from 'node:http'
 
 // Simula a Vercel: cada arquivo de api/ responde a uma rota, com o banco vindo de TURSO_DATABASE_URL.
@@ -54,4 +54,27 @@ it('as funções da Vercel cadastram, mantêm a sessão, saem e entram de novo',
     body: JSON.stringify({ email: 'ana@example.com', senha: 'senha-teste-123' }),
   })
   expect(loggedIn.status).toBe(200)
+})
+
+it('se o banco falhar ao abrir, a próxima requisição tenta de novo em vez de ficar respondendo 500', async () => {
+  const { createApi } = await import('./routes.js')
+  const { openDatabase } = await import('./database.js')
+  let attempts = 0
+  const api = createApi(() => {
+    attempts++
+    return attempts === 1 ? Promise.reject(new Error('banco ocupado')) : openDatabase(':memory:')
+  })
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const local = createServer((req, res) => api(req, res, () => { res.statusCode = 404; res.end() }))
+  await new Promise(resolve => local.listen(0, '127.0.0.1', resolve))
+  const base = `http://127.0.0.1:${local.address().port}`
+  try {
+    expect((await fetch(`${base}/api/sessao`)).status).toBe(500)
+    expect((await fetch(`${base}/api/sessao`)).status).toBe(200)
+    expect(attempts).toBe(2)
+    expect(errors).toHaveBeenCalled()
+  } finally {
+    errors.mockRestore()
+    await new Promise(resolve => local.close(resolve))
+  }
 })
