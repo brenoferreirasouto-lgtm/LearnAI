@@ -15,7 +15,7 @@ pnpm install
 pnpm dev
 ```
 
-O `pnpm dev` sobe o app e a API de cadastro juntos: a API roda dentro do servidor do Vite (`server/vite-plugin.js`) e grava os dados em `data/learnai.sqlite`, pasta que fica fora do Git. Para trocar a senha de uma conta local, use `pnpm definir-senha email@exemplo.com` num terminal interativo. Os detalhes do cadastro estão em [docs/f15-cadastro-usuario.md](docs/f15-cadastro-usuario.md).
+O `pnpm dev` sobe o app e a API de cadastro juntos: a API roda dentro do servidor do Vite (`server/vite-plugin.js`) e grava os dados em `data/learnai.sqlite`, pasta que fica fora do Git. Para trocar a senha de uma conta local, use `pnpm definir-senha email@exemplo.com` num terminal interativo; para tornar uma conta administradora, `npm run tornar-admin -- email@exemplo.com`. Os detalhes do cadastro, inclusive como fazer isso em produção, estão em [docs/f15-cadastro-usuario.md](docs/f15-cadastro-usuario.md).
 
 ## Testes
 
@@ -26,11 +26,11 @@ O `pnpm dev` sobe o app e a API de cadastro juntos: a API roda dentro do servido
 | `pnpm exec tsc --noEmit` | Checagem de tipos do TypeScript |
 | `pnpm test:e2e` | Testes de sistema (Playwright) em `tests/e2e/`, sobre um build local |
 
-Antes do primeiro `pnpm test:e2e`, instale o navegador com `pnpm exec playwright install chromium`. Para rodar os testes de sistema contra o site publicado, defina `E2E_BASE_URL=https://learn-ai-mu-pied.vercel.app` antes do comando.
+Antes do primeiro `pnpm test:e2e`, instale o navegador com `pnpm exec playwright install chromium`. Para rodar os testes de sistema contra o site publicado, defina `E2E_BASE_URL=https://learnai-cesar.vercel.app` antes do comando. Esses testes criam contas de teste (`@example.com`) no banco de produção.
 
 Cada história tem seus cenários de sistema num `test.describe` com o código dela no nome, como `F15 — Cadastro de usuário`. Uma história nova ou alterada entra com teste.
 
-O CI (`.github/workflows/testes.yml`) roda dois checks em todo pull request para a `main`: `testes` (Vitest com cobertura) e `Testes de sistema (Playwright)`. Os dois precisam passar para o merge.
+O CI (`.github/workflows/testes.yml`) roda dois checks em todo pull request para a `main`: `testes` (checagem de tipos com `tsc` e Vitest com cobertura) e `Testes de sistema (Playwright)`. Os dois precisam passar para o merge.
 
 ## Fluxo de trabalho
 
@@ -47,7 +47,7 @@ O CI (`.github/workflows/testes.yml`) roda dois checks em todo pull request para
 3. Faça a mudança em commits pequenos, rodando os testes antes de cada um.
 4. Envie a branch com `git push -u origin feat/nome-curto` e abra o pull request para a `main`.
 5. Mova o card para **Revisão do código** e anexe o link do PR.
-6. Depois da aprovação e do merge, apague a branch e mova o card para **Concluido**.
+6. Depois da aprovação e do merge, apague a branch e mova o card para **Concluido**. O merge na `main` publica a produção na Vercel (https://learnai-cesar.vercel.app); cada PR também ganha um preview com uma cópia do banco.
 
 ## Padrão de commit
 

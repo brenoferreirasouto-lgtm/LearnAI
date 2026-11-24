@@ -1,6 +1,6 @@
 # F15 — Cadastro de usuário
 
-Branch: `feature/f15-cadastro-usuario`.
+Integrado na `main` e publicado em https://learnai-cesar.vercel.app.
 
 ## Perfis de usuário e administrador
 
@@ -14,7 +14,7 @@ npm run tornar-admin -- admin@exemplo.com
 
 O comando só muda o perfil de uma conta que já existe. A senha continua sendo a que a pessoa escolheu no cadastro, e ela entra selecionando **Administrador**.
 
-O administrador acessa o painel **Textos do site** e pode editar título e descrição principal e título e descrição do cadastro. Clique em **Salvar alterações**. As edições são persistidas em `conteudo_site` no SQLite e carregadas na tela inicial dos visitantes; quem já estiver com a página aberta deve recarregar. O painel não altera código, cursos, layout ou permissões de outras contas.
+O administrador acessa o painel **Textos do site** e pode editar título e descrição principal e título e descrição do cadastro. Clique em **Salvar alterações**. As edições são persistidas em `conteudo_site` no banco (SQLite local ou Turso em produção) e carregadas na tela inicial dos visitantes; quem já estiver com a página aberta deve recarregar. O painel não altera código, cursos, layout ou permissões de outras contas.
 
 Para demonstrar, entre como Administrador, altere um título, salve e saia. Confira o texto na tela inicial. Entre como Usuário: o perfil de aprendizagem é aberto, sem painel de edição. Se selecionar Administrador com credenciais de usuário, o login será recusado.
 
@@ -59,25 +59,31 @@ npm.cmd run definir-senha -- bruno@bruno.com
 Digite a senha e confirme (a entrada fica oculta). A ferramenta também serve para redefinição administrativa local e invalida sessões anteriores da conta. Depois, clique em **Já tenho conta** e entre. Não existe recuperação pública por e-mail nesta versão; apenas saber o e-mail não permite definir a senha de uma conta antiga.
 O progresso de aprendizagem continua local. Nome e e-mail passam a ser persistidos no servidor; antigos cadastros exclusivos do localStorage não são migrados automaticamente.
 
-No desenvolvimento e no `vite preview`, o cadastro usa a API Node + SQLite. Em hospedagem estática como o Vercel, o cliente detecta a ausência dessa API e usa um fallback local no navegador para manter cadastro, login, bloqueio de e-mail duplicado e painel de demonstração funcionais. Nesse modo publicado, os dados ficam restritos ao navegador/dispositivo e não são sincronizados entre usuários ou máquinas.
+No desenvolvimento e no `vite preview`, o cadastro usa a API Node + SQLite; na Vercel, a mesma API roda em funções serverless com o banco Turso. Não existe cadastro só no navegador: se o servidor não responder, o app mostra "Servidor indisponível. Tente novamente em instantes." e não cria a conta.
 
 ## Produção na Vercel
 
 No deploy, cada arquivo de `api/` vira uma função serverless que atende uma rota (`/api/sessao`, `/api/conteudo`, `/api/usuarios`, `/api/login` e `/api/admin/conteudo`) com o mesmo `createApi` do servidor de desenvolvimento. Os dados ficam num banco Turso, que é libSQL hospedado:
 
 1. No projeto da Vercel, na aba **Storage**, crie um banco Turso pelo Marketplace e conecte-o aos ambientes Production e Preview. O código lê a conexão de `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN`.
-2. Faça um novo deploy. As tabelas são criadas na primeira execução das funções.
-3. Para ter um administrador em produção, cadastre a conta pelo site e promova-a do seu computador, apontando para o mesmo banco:
+2. Na conexão do banco com o projeto (**Storage → banco → Projects → Update Project Connection**), deixe marcado em **Create Database Branch For Deployment** só o **Preview**. Com **Production** marcado, cada deploy de produção ganha um banco novo e vazio, e as contas criadas antes somem.
+3. Faça um novo deploy. As tabelas são criadas na primeira execução das funções.
+4. Para ter um administrador em produção, cadastre a conta pelo site e promova-a do seu computador, apontando para o banco principal. A integração marca as variáveis como sensíveis, e a Vercel não mostra o valor delas; gere um token no painel do Turso (**Databases → banco → Create Token**) e copie o endereço `libsql://` do banco. Para o token não aparecer na tela nem ficar no histórico do terminal:
 
 ```bash
-TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run tornar-admin -- admin@exemplo.com
+read -r TURSO_DATABASE_URL     # cole o endereço libsql:// e aperte Enter
+read -rs TURSO_AUTH_TOKEN      # cole o token (não aparece) e aperte Enter
+export TURSO_DATABASE_URL TURSO_AUTH_TOKEN
+node server/promote-admin.js admin@exemplo.com
 ```
 
-Sem `TURSO_DATABASE_URL`, as funções respondem erro 500 e o log da Vercel diz o que falta configurar.
+Depois, apague o token no painel do Turso; o site usa o token da integração.
+
+Sem `TURSO_DATABASE_URL`, as funções respondem erro 500 e o log da Vercel diz o que falta configurar. Se o banco não abrir no início de uma função, a próxima requisição tenta de novo, e o erro aparece nos logs da Vercel.
 
 ## Demonstração
 
-1. Abra o site na branch indicada; pule o vídeo de abertura se necessário.
+1. Abra o site (https://learnai-cesar.vercel.app ou `pnpm dev`); pule o vídeo de abertura se necessário.
 2. Preencha nome `Ana` e e-mail `invalido`. Clique em **Criar meu espaço**: aparece `Informe um e-mail válido.` e nada é salvo. Nome composto só por espaços também é bloqueado.
 3. Use `Ana`, `ANA@EXEMPLO.COM` e uma senha de pelo menos 8 caracteres. Envie: aparece sucesso e abre **Seu perfil**, com nome e e-mail `ana@exemplo.com`.
 4. Recarregue a página; o perfil continua aberto. Reinicie o servidor e recarregue: o cadastro e a sessão permanecem.
