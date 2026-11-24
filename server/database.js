@@ -55,8 +55,13 @@ async function migrate(db) {
     await addColumn("ALTER TABLE usuarios ADD COLUMN perfil TEXT NOT NULL DEFAULT 'usuario' CHECK(perfil IN ('usuario', 'admin'))")
 }
 
+/**
+ * O banco local (arquivo) informa o código estendido do SQLite; o Turso, acessado por HTTP,
+ * só devolve o código genérico SQLITE_CONSTRAINT com a mensagem do SQLite. Aceita os dois.
+ */
 export function isDuplicateEmail(error) {
-  return error?.rawCode === 2067 || error?.extendedCode === 'SQLITE_CONSTRAINT_UNIQUE'
+  return error?.rawCode === 2067 || error?.extendedCode === 'SQLITE_CONSTRAINT_UNIQUE' ||
+    /UNIQUE constraint failed: usuarios\.email/i.test(error?.message || '')
 }
 
 export async function openDatabase(filename) {

@@ -35,6 +35,8 @@ test.describe('F15 — Cadastro de usuário', () => {
 
     await page.getByRole('button', { name: /Ana Perfil neste dispositivo/ }).click()
     await page.getByRole('button', { name: 'Sair do perfil neste dispositivo' }).click()
+    // Espera a saída terminar no servidor antes de pedir um novo cadastro.
+    await expect(page.getByRole('heading', { name: 'Entre na sua conta' })).toBeVisible()
     await page
       .getByRole('button', { name: 'Criar outro cadastro neste dispositivo' })
       .click()
