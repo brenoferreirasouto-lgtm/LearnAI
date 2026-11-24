@@ -13,11 +13,27 @@ async function readBody(req) {
   return JSON.parse(body)
 }
 
-/** Recebe o store do banco, ou a promessa dele, e devolve o middleware da API. */
-export function createApi(storeOrPromise) {
-  const ready = Promise.resolve(storeOrPromise)
-  // Se o banco não abrir, cada requisição responde 500, sem derrubar o processo.
-  ready.catch(() => {})
+/**
+ * Recebe o store do banco (ou a promessa dele, ou uma função que o abre) e devolve o
+ * middleware da API. Com uma função, se a abertura falhar (ex.: o Turso recusar a conexão
+ * enquanto outra função migra o banco), a próxima requisição tenta abrir de novo em vez de
+ * responder 500 para sempre naquela instância.
+ */
+export function createApi(store) {
+  const reopen = typeof store === 'function'
+  let ready = null
+  const openStore = () => {
+    if (!ready) {
+      const attempt = Promise.resolve(reopen ? store() : store)
+      ready = attempt
+      // Se o banco não abrir, a requisição responde 500, sem derrubar o processo.
+      attempt.catch(error => {
+        console.error('[learnai-api] Falha ao abrir o banco:', error)
+        if (reopen && ready === attempt) ready = null
+      })
+    }
+    return ready
+  }
   const attempts = new Map()
   const dummyHash = hashPassword(randomBytes(32).toString('hex'))
   return async (req, res, next) => {
@@ -29,7 +45,7 @@ export function createApi(storeOrPromise) {
     const token = /(?:^|;\s*)learnai_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1] || ''
     const cookie = (value, age) => res.setHeader('Set-Cookie', `learnai_session=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${age}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`)
     try {
-      const store = await ready
+      const store = await openStore()
       if (req.method !== 'GET' && req.headers.origin && req.headers.origin !== `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`)
         return send(403, { error: 'Origem da solicitação não permitida.' })
       if (path === '/api/sessao' && req.method === 'GET')
@@ -101,7 +117,8 @@ export function createApi(storeOrPromise) {
         }
       }
       send(404, { error: 'Endpoint não encontrado.' })
-    } catch {
+    } catch (error) {
+      console.error(`[learnai-api] ${req.method} ${path}:`, error)
       send(500, { error: 'Não foi possível concluir a solicitação. Tente novamente.' })
     }
   }
