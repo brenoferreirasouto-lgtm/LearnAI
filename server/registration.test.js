@@ -62,6 +62,16 @@ it('valida, normaliza, persiste usuários e sessões e impede duplicidade após 
   expect((await login(user.email, 'senha-teste-123')).status).toBe(429)
 })
 
+it('abre o mesmo banco novo em várias funções ao mesmo tempo sem falhar na migração', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'learnai-concurrent-'))
+  cleanup.push(() => rmSync(dir, { recursive: true, force: true }))
+  const filename = join(dir, 'new.sqlite')
+  const stores = await Promise.all([openDatabase(filename), openDatabase(filename), openDatabase(filename)])
+  for (const store of stores) cleanup.push(() => store.close())
+  expect(await stores[1].readContent()).toBeNull()
+  expect((await stores[2].createUser('Ana', 'ana@example.com')).perfil).toBe('usuario')
+})
+
 it('migra contas antigas sem apagar usuários e permite definir a primeira senha', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'learnai-migration-'))
   cleanup.push(() => rmSync(dir, { recursive: true, force: true }))

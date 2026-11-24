@@ -16,6 +16,8 @@ function clientConfig(filename) {
   if (filename === ':memory:') return { url: ':memory:' }
   if (!filename && process.env.TURSO_DATABASE_URL)
     return { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
+  if (!filename && process.env.VERCEL)
+    throw new Error('Configure TURSO_DATABASE_URL e TURSO_AUTH_TOKEN no projeto da Vercel.')
   const path = resolve(filename || process.env.DATABASE_PATH || 'data/learnai.sqlite')
   mkdirSync(dirname(path), { recursive: true })
   return { url: pathToFileURL(path).href }
@@ -40,10 +42,17 @@ async function migrate(db) {
     );
     CREATE TABLE IF NOT EXISTS conteudo_site (id INTEGER PRIMARY KEY CHECK(id = 1), dados TEXT NOT NULL);`)
   const columns = (await db.execute('PRAGMA table_info(usuarios)')).rows.map(column => column.name)
+  // Na Vercel cada rota é uma função própria; várias podem migrar o mesmo banco ao mesmo tempo.
+  // Se outra já criou a coluna, o "duplicate column name" não é erro.
+  const addColumn = async (sql) => {
+    try { await db.execute(sql) } catch (error) {
+      if (!/duplicate column name/i.test(error?.message || '')) throw error
+    }
+  }
   if (!columns.includes('senha_hash'))
-    await db.execute('ALTER TABLE usuarios ADD COLUMN senha_hash TEXT')
+    await addColumn('ALTER TABLE usuarios ADD COLUMN senha_hash TEXT')
   if (!columns.includes('perfil'))
-    await db.execute("ALTER TABLE usuarios ADD COLUMN perfil TEXT NOT NULL DEFAULT 'usuario' CHECK(perfil IN ('usuario', 'admin'))")
+    await addColumn("ALTER TABLE usuarios ADD COLUMN perfil TEXT NOT NULL DEFAULT 'usuario' CHECK(perfil IN ('usuario', 'admin'))")
 }
 
 export function isDuplicateEmail(error) {
