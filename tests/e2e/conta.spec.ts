@@ -7,7 +7,7 @@ const uniqueEmail = (prefix: string) => `${prefix}-${randomUUID()}@example.com`
 test.describe('F15 — Cadastro de usuário', () => {
   test.beforeEach(async ({ page }) => openFresh(page))
 
-  test('cria a conta local e mantém os dados após recarregar', async ({ page }) => {
+  test('cria a conta no servidor e mantém os dados após recarregar', async ({ page }) => {
     const email = uniqueEmail('ana-cadastro')
     await signUp(page, 'Ana', email)
 
