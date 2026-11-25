@@ -15,6 +15,20 @@ F15 — cadastro com banco (SQLite no desenvolvimento, Turso em produção): [co
 - **Validação:** 67 testes Vitest e 15 testes Playwright aprovados na `main`; os 15 testes de sistema também passam contra a URL publicada (`E2E_BASE_URL=https://learnai-cesar.vercel.app pnpm test:e2e`).
 - **Endereço anterior:** `learn-ai-mu-pied.vercel.app` era um projeto na conta de um integrante, publicado a partir da branch `feature/f15-cadastro-usuario` e sem a API de cadastro. Foi substituído pelo projeto acima, que publica a `main` com o banco.
 
+## Screencast da entrega final
+
+- [Assistir ao screencast final no YouTube](https://www.youtube.com/watch?v=AJNpEcp-DV0)
+- [Acessar a aplicação em produção](https://learnai-cesar.vercel.app)
+
+Histórias da Sprint 03 incluídas no screencast:
+
+- **F12** — Quiz de avaliação do aprendizado.
+- **F13** — Sistema de feedback dos exercícios.
+- **F14** — Menu interativo de funcionalidades.
+- **F15** — Cadastro de usuário.
+
+**Contribuição individual de João Fernando (`JoaoFer948`).** Registro do screencast final no README, com os links da entrega e a lista de histórias. O Codex (OpenAI) auxiliou na redação da seção e na verificação do diff.
+
 ## Produto oficial
 
 O produto do Learn AI é o **app React + Vite** (pasta `src/`), publicado a partir da `main`.
