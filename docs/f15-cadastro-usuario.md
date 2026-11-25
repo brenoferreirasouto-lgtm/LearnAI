@@ -46,7 +46,7 @@ A tabela `usuarios` contém `id`, `nome`, `email` UNIQUE em minúsculas e `criad
 
 O cookie HttpOnly identifica uma sessão de 30 dias, que sobrevive a recarga e reinício. Sair invalida a sessão no banco, sem excluir usuários, e abre a tela de login. Criar outro cadastro encerra a sessão e abre o formulário de cadastro vazio. A opção **Já tenho conta** permite entrar novamente com e-mail e senha.
 
-As senhas têm entre 8 e 128 caracteres e são persistidas como hash scrypt com salt aleatório. O campo permite salvar e preencher a senha pelo gerenciador do navegador; a aplicação não guarda senha em texto no localStorage nem a devolve pela API. Há limite de 20 tentativas de cadastro/login por minuto por IP no processo do servidor.
+As senhas têm entre 8 e 128 caracteres e são persistidas como hash scrypt com salt aleatório. O campo permite salvar e preencher a senha pelo gerenciador do navegador; a aplicação não guarda senha em texto no localStorage nem a devolve pela API. Há limite de 20 tentativas de cadastro/login por minuto por IP. A contagem fica na tabela `tentativas` do banco, para valer em todas as funções da Vercel, e não só na memória de uma delas. O banco guarda apenas o hash SHA-256 do token de cada sessão; o token original fica só no cookie.
 
 ### Contas antigas criadas sem senha
 
@@ -91,4 +91,8 @@ Sem `TURSO_DATABASE_URL`, as funções respondem erro 500 e o log da Vercel diz 
 6. Clique em **Criar outro cadastro neste dispositivo**; os campos ficam vazios. Cadastre `Bruno` com `bruno@exemplo.com` e senha: um segundo cadastro é salvo sem excluir Ana.
 7. No perfil, clique em **Criar outro cadastro neste dispositivo**. Tente cadastrar novamente `Ana` com ` ANA@EXEMPLO.COM ` e uma senha válida: aparece exatamente **E-mail já cadastrado**.
 
-Os testes em `server/registration.test.js` verificam HTTP, banco real temporário, unicidade, múltiplos usuários, normalização, encerramento de sessão e reabertura do banco. Os testes do formulário verificam validação no cliente, limpeza e mensagem de duplicidade.
+Os testes em `server/registration.test.js` verificam HTTP, banco real temporário, unicidade, múltiplos usuários, normalização, encerramento de sessão, reabertura do banco, hash do token da sessão e contagem de tentativas compartilhada no banco. Os testes do formulário verificam validação no cliente, limpeza e mensagem de duplicidade.
+
+## Progresso de mais de uma conta no mesmo navegador
+
+O progresso de aprendizagem (XP, lições, quizzes e projetos) fica no `localStorage` do navegador. Quando outra conta entra no mesmo navegador, o progresso da conta anterior é guardado em `learnai.progress.archive.v1`, separado por e-mail, e volta quando ela entra de novo. Antes, ele era apagado. O progresso ainda não é sincronizado com o servidor: em outro dispositivo, a conta começa do zero.

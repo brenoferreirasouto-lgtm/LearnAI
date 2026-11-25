@@ -232,16 +232,23 @@ function Icon({ name, size = 20 }: IconProps) {
 }
 
 function Brand() {
+  // Se o arquivo do logo não carregar (ex.: ponteiro do Git LFS publicado no lugar da imagem),
+  // mostra o nome em texto em vez de um espaço vazio.
+  const [logoFailed, setLogoFailed] = useState(false)
   return (
     <span
       className="brand"
       role="img"
       aria-label="Learn AI"
     >
-      <span className="brand-image-frame" aria-hidden="true">
-        <img className="brand-image" src={`${import.meta.env.BASE_URL}assets/learn-ai-logo.png`} alt="" />
-        <img className="brand-image brand-image-white-text" src={`${import.meta.env.BASE_URL}assets/learn-ai-logo.png`} alt="" />
-      </span>
+      {logoFailed ? (
+        <span className="brand-text" aria-hidden="true">Learn AI</span>
+      ) : (
+        <span className="brand-image-frame" aria-hidden="true">
+          <img className="brand-image" src={`${import.meta.env.BASE_URL}assets/learn-ai-logo.png`} alt="" onError={() => setLogoFailed(true)} />
+          <img className="brand-image brand-image-white-text" src={`${import.meta.env.BASE_URL}assets/learn-ai-logo.png`} alt="" onError={() => setLogoFailed(true)} />
+        </span>
+      )}
     </span>
   )
 }

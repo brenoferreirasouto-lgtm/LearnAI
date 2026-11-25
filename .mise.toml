@@ -1,3 +1,4 @@
 [tools]
-node = "24"
-"npm:pnpm" = "10.34.3"
+# Mesmas versões do CI (.github/workflows/testes.yml) e do playwright.config.ts.
+node = "22"
+"npm:pnpm" = "9.15.9"

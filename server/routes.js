@@ -34,7 +34,6 @@ export function createApi(store) {
     }
     return ready
   }
-  const attempts = new Map()
   const dummyHash = hashPassword(randomBytes(32).toString('hex'))
   return async (req, res, next) => {
     const path = (req.url || '').split('?')[0]
@@ -75,11 +74,7 @@ export function createApi(store) {
       if (['/api/usuarios', '/api/login'].includes(path) && req.method === 'POST') {
         // Na Vercel o endereço da conexão é do proxy; o IP do visitante vem em x-real-ip.
         const key = (process.env.VERCEL && req.headers['x-real-ip']) || req.socket.remoteAddress || 'local'
-        const now = Date.now()
-        for (const [ip, entry] of attempts) if (entry.until < now) attempts.delete(ip)
-        const attempt = attempts.get(key) || { count: 0, until: now + 60000 }
-        attempts.set(key, attempt)
-        if (++attempt.count > 20) return send(429, { error: 'Muitas tentativas. Aguarde um minuto e tente novamente.' })
+        if (await store.countAttempt(key) > 20) return send(429, { error: 'Muitas tentativas. Aguarde um minuto e tente novamente.' })
         let body = ''
         for await (const chunk of req) {
           body += chunk
@@ -95,7 +90,7 @@ export function createApi(store) {
         if (path === '/api/login') {
           const credentials = await store.findCredentials(data.email)
           const valid = await verifyPassword(senha, credentials?.senha_hash || await dummyHash)
-          if (!credentials?.senha_hash || !valid) return send(401, { error: 'E-mail ou senha incorretos. Se sua conta foi criada sem senha, defina a primeira senha pelo terminal do projeto.' })
+          if (!credentials?.senha_hash || !valid) return send(401, { error: 'E-mail ou senha incorretos.' })
           const selectedRole = input.perfil || 'usuario'
           if (!['usuario', 'admin'].includes(selectedRole) || selectedRole !== credentials.perfil)
             return send(403, { error: 'Este cadastro não possui o perfil selecionado.' })

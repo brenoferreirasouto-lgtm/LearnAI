@@ -81,6 +81,7 @@ textarea { resize: vertical; }
 .brand-image-frame { background: transparent; border-radius: 4px; display: block; flex: 0 0 auto; height: 34px; overflow: hidden; position: relative; width: 116px; }
 .brand-image { height: 134px; left: -9px; max-width: none; position: absolute; top: -47px; width: 134px; }
 .brand-image-white-text { clip-path: inset(0 24.5% 0 34.5%); filter: brightness(0) invert(1); }
+.brand-text { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; line-height: 34px; }
 
 .button { align-items: center; border: 1px solid transparent; border-radius: 10px; display: inline-flex; font-size: var(--text-body); font-weight: 700; gap: var(--space-2); justify-content: center; min-height: var(--control-height); padding: 0 17px; text-align: center; transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease; }
 .button:not(:disabled):hover { transform: translateY(-1px); }

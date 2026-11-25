@@ -88,9 +88,16 @@ export function createEmptyProgress(): Progress {
 }
 
 export function readProgress(): Progress {
+  try {
+    return parseProgress(window.localStorage.getItem(storageKey))
+  } catch {
+    return createEmptyProgress()
+  }
+}
+
+function parseProgress(raw: string | null): Progress {
   const empty = createEmptyProgress()
   try {
-    const raw = window.localStorage.getItem(storageKey)
     if (!raw) return empty
     const value: unknown = JSON.parse(raw)
     if (!value || typeof value !== "object") return empty
@@ -254,3 +261,43 @@ export const projectTemplate: Omit<ProjectStep, "complete">[] = [
       "Teste o resultado com critérios definidos. Registre o que mudou, o que foi verificado e como a autoria foi preservada.",
   },
 ]
+
+/** Progresso de outras contas que já usaram este navegador, guardado por e-mail. */
+export const archiveStorageKey = "learnai.progress.archive.v1"
+
+function readArchive(): Record<string, string> {
+  try {
+    const value: unknown = JSON.parse(
+      window.localStorage.getItem(archiveStorageKey) || "{}",
+    )
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, string>)
+      : {}
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * Abre o progresso da conta que acabou de entrar. Se havia progresso de outra conta
+ * neste navegador, ele é guardado (e não apagado) para ser restaurado quando ela voltar.
+ */
+export function switchProgressProfile(name: string, email: string): Progress {
+  const normalizedEmail = email.trim().toLowerCase()
+  const current = readProgress()
+  let progress = current
+  if (current.profileEmail !== normalizedEmail) {
+    const archive = readArchive()
+    if (current.profileEmail) archive[current.profileEmail] = JSON.stringify(current)
+    progress = parseProgress(archive[normalizedEmail] ?? null)
+    delete archive[normalizedEmail]
+    try {
+      window.localStorage.setItem(archiveStorageKey, JSON.stringify(archive))
+    } catch {
+      /* Sem espaço: o progresso atual continua no navegador até a próxima gravação. */
+    }
+  }
+  const next = { ...progress, profileName: name, profileEmail: normalizedEmail }
+  saveProgress(next)
+  return next
+}
