@@ -1,35 +1,31 @@
-# figma-make-app
+# Learn AI
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+Plataforma educacional de letramento em IA: app React 19 + Vite 8 + Tailwind CSS v4 (pasta `src/`), com API de cadastro/login em Node e banco libSQL (SQLite local no desenvolvimento, Turso em produção na Vercel).
 
-## Development Server
+## Comandos
 
-A Vite development server is **already running** on `$PORT` (default 8443). You don't need to start it manually.
+- `pnpm dev`: servidor local (a API roda no mesmo servidor pelo plugin `server/vite-plugin.js`, com banco em `data/learnai.sqlite`)
+- `pnpm test`: Vitest (frontend em jsdom e backend em `server/**/*.test.js`)
+- `pnpm exec tsc --noEmit`: checagem de tipos
+- `pnpm test:e2e`: Playwright sobre o build local (`E2E_BASE_URL` para rodar contra o deploy)
+- `pnpm definir-senha -- email` e `pnpm tornar-admin -- email`: ferramentas administrativas locais
 
-- Preview URL: The user can access the running app through the preview panel
-- Hot reload: Changes to source files are reflected immediately
+Versões: Node 22 e pnpm 9.15.9, as mesmas do CI (`.github/workflows/testes.yml`).
 
-## Project Structure
+## Estrutura
 
-This is the canonical project structure. Start with task-relevant files below. Only follow imports or inspect other files when required, when a documented path is missing, or when the repository contradicts this guide.
+- `src/main.tsx`: entrada; mostra a splash (`src/SplashScreen.tsx`) e monta `src/components/AccountGate.tsx`
+- `src/components/AccountGate.tsx`: sessão, cadastro/login (`RegistrationForm.tsx`) e painel do administrador (`AdminPanel.tsx`)
+- `src/App.tsx`: aplicação de aprendizagem (trilhas, quizzes, prática, projetos, perfil)
+- `src/data/`: conteúdo das lições e exercícios; `src/lib/`: progresso (`localStorage`), resultados e recomendações
+- `server/routes.js`: API (`/api/usuarios`, `/api/login`, `/api/sessao`, `/api/conteudo`, `/api/admin/conteudo`)
+- `server/database.js`: banco, migrações e consultas; `server/passwords.js`: hash scrypt
+- `api/`: funções serverless da Vercel, que reaproveitam `server/routes.js`
+- `shared/`: validação e textos padrão usados no cliente e no servidor
+- `tests/e2e/`: testes de sistema Playwright
 
-- `src/main.tsx` - React entrypoint; imports `src/index.css` and mounts `src/App.tsx` into the `#root` element
-- `src/App.tsx` - Primary application component and the usual starting point for UI work
-- `src/index.css` - Global CSS entrypoint and Tailwind CSS v4 import
-- `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
-- `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
-- `vite.config.ts` - Vite configuration with React, Tailwind CSS v4, and Figma Make plugins plus the `@` alias for `src`
-- `.mise.toml` - Toolchain versions for Node.js and pnpm
+## Cuidados
 
-## Dependencies
-
-- Runtime: React 19 and React DOM 19
-- Styling: Tailwind CSS v4 with the `@tailwindcss/vite` plugin
-- Build tooling: Vite 8, TypeScript 5.7, and `@vitejs/plugin-react`
-- Formatting: oxfmt
-
-## Styling
-
-This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin configured in `vite.config.ts`. `src/index.css` imports Tailwind with `@import 'tailwindcss';`. Use Tailwind utility classes directly in JSX and put global CSS or Tailwind v4 theme customization in `src/index.css`. This scaffold does not need a Tailwind config file or PostCSS config.
-
-`src/main.tsx` imports `src/index.css`, so global font wiring belongs in `src/index.css`. Keep CSS `@import` statements first, then add any `@font-face` rules and font-family defaults there.
+- Imagens e vídeos são enviados ao Git LFS por padrão (`.gitattributes`). Arquivos servidos pelo site em `public/` precisam de uma exceção no `.gitattributes`, senão a Vercel publica o ponteiro de 131 bytes no lugar do arquivo.
+- Contas e sessões ficam no servidor; o progresso de aprendizagem fica no navegador, separado por e-mail.
+- Leia o `CONTRIBUTING.md` antes de abrir um pull request.

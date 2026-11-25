@@ -4,11 +4,11 @@ import { createServer } from 'node:http'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { isDuplicateEmail, openDatabase } from './database.js'
+import { isDuplicateEmail, openDatabase, sessionKey } from './database.js'
 import { createApi } from './routes.js'
 import { createClient } from '@libsql/client'
 import { pathToFileURL } from 'node:url'
-import { hashPassword } from './passwords.js'
+import { hashPassword, verifyPassword } from './passwords.js'
 
 const cleanup = []
 afterEach(async () => { for (const fn of cleanup.splice(0).reverse()) await fn() })
@@ -98,4 +98,40 @@ it('migra contas antigas sem apagar usuários e permite definir a primeira senha
   await store.resetPassword(user.id, await hashPassword('nova-senha-segura'))
   expect((await store.findCredentials(user.email)).id).toBe(user.id)
   expect((await store.findCredentials(user.email)).senha_hash).toBeTruthy()
+})
+
+it('guarda só o hash do token da sessão no banco', async () => {
+  const store = await openDatabase(':memory:')
+  cleanup.push(() => store.close())
+  const user = await store.createUser('Ana', 'ana@example.com', 'hash')
+  const token = 'a'.repeat(64)
+  await store.createSession(token, user.id)
+  const saved = (await store.db.execute('SELECT token FROM sessoes')).rows[0].token
+  expect(saved).not.toBe(token)
+  expect(saved).toBe(sessionKey(token))
+  expect((await store.session(token)).id).toBe(user.id)
+  await store.signOut(token)
+  expect(await store.session(token)).toBeUndefined()
+})
+
+it('conta as tentativas no banco, valendo para todas as funções que o compartilham', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'learnai-attempts-'))
+  cleanup.push(() => rmSync(dir, { recursive: true, force: true }))
+  const filename = join(dir, 'attempts.sqlite')
+  const first = await openDatabase(filename)
+  const second = await openDatabase(filename)
+  cleanup.push(() => first.close(), () => second.close())
+  expect(await first.countAttempt('1.2.3.4')).toBe(1)
+  expect(await second.countAttempt('1.2.3.4')).toBe(2)
+  expect(await second.countAttempt('5.6.7.8')).toBe(1)
+  // Janela vencida: a contagem recomeça.
+  expect(await first.countAttempt('9.9.9.9', -1)).toBe(1)
+  expect(await first.countAttempt('9.9.9.9')).toBe(1)
+})
+
+it('trata hash de senha vazio ou corrompido como senha incorreta', async () => {
+  expect(await verifyPassword('qualquer-senha', '')).toBe(false)
+  expect(await verifyPassword('qualquer-senha', 'sal-sem-hash')).toBe(false)
+  expect(await verifyPassword('qualquer-senha', 'sal:abc')).toBe(false)
+  expect(await verifyPassword('senha-certa-123', await hashPassword('senha-certa-123'))).toBe(true)
 })

@@ -1,9 +1,18 @@
 import { createClient } from '@libsql/client'
+import { createHash } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const SESSION_DAYS = 30
+
+/**
+ * O banco guarda só o SHA-256 do token da sessão: quem ler o banco não consegue usar
+ * as sessões abertas. O cookie continua com o token original.
+ */
+export function sessionKey(token) {
+  return createHash('sha256').update(String(token || '')).digest('hex')
+}
 
 /**
  * Escolhe o banco:
@@ -32,7 +41,7 @@ async function migrate(db) {
   // Na Vercel, várias funções abrem o banco ao mesmo tempo. Só lê o esquema (sem travar o banco)
   // e cria as tabelas apenas se ainda faltar alguma.
   const tables = new Set((await db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.map(row => row.name))
-  if (!['usuarios', 'sessoes', 'conteudo_site'].every(name => tables.has(name))) await db.executeMultiple(`
+  if (!['usuarios', 'sessoes', 'conteudo_site', 'tentativas'].every(name => tables.has(name))) await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY,
       nome TEXT NOT NULL CHECK(length(trim(nome)) BETWEEN 1 AND 60),
@@ -44,7 +53,8 @@ async function migrate(db) {
       usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
       expira_em INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS conteudo_site (id INTEGER PRIMARY KEY CHECK(id = 1), dados TEXT NOT NULL);`)
+    CREATE TABLE IF NOT EXISTS conteudo_site (id INTEGER PRIMARY KEY CHECK(id = 1), dados TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS tentativas (chave TEXT PRIMARY KEY, total INTEGER NOT NULL, expira_em INTEGER NOT NULL);`)
   const columns = (await db.execute('PRAGMA table_info(usuarios)')).rows.map(column => column.name)
   // Na Vercel cada rota é uma função própria; várias podem migrar o mesmo banco ao mesmo tempo.
   // Se outra já criou a coluna, o "duplicate column name" não é erro.
@@ -73,7 +83,7 @@ export async function openDatabase(filename) {
   await migrate(db)
   const newSession = (token, userIdSql, args) => ({
     sql: `INSERT INTO sessoes (token, usuario_id, expira_em) VALUES (?, ${userIdSql}, ?)`,
-    args: [token, ...args, Date.now() + SESSION_DAYS * 86400000],
+    args: [sessionKey(token), ...args, Date.now() + SESSION_DAYS * 86400000],
   })
   const dropExpired = () => ({ sql: 'DELETE FROM sessoes WHERE expira_em < ?', args: [Date.now()] })
   return {
@@ -103,7 +113,7 @@ export async function openDatabase(filename) {
     /** Cria o usuário e já abre a sessão dele, encerrando a anterior, numa única transação. */
     async registerWithSession(nome, email, hash, newToken, previousToken) {
       const [, created] = await db.batch([
-        { sql: 'DELETE FROM sessoes WHERE token = ?', args: [previousToken] },
+        { sql: 'DELETE FROM sessoes WHERE token = ?', args: [sessionKey(previousToken)] },
         {
           sql: 'INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?) RETURNING id, nome, email, criado_em, perfil',
           args: [nome, email, hash],
@@ -119,7 +129,7 @@ export async function openDatabase(filename) {
     /** Encerra a sessão anterior e abre uma nova para a conta, numa única transação. */
     async replaceSession(previousToken, newToken, id) {
       await db.batch([
-        { sql: 'DELETE FROM sessoes WHERE token = ?', args: [previousToken] },
+        { sql: 'DELETE FROM sessoes WHERE token = ?', args: [sessionKey(previousToken)] },
         dropExpired(),
         newSession(newToken, '?', [id]),
       ], 'write')
@@ -128,12 +138,28 @@ export async function openDatabase(filename) {
       const result = await db.execute({
         sql: `SELECT u.id, u.nome, u.email, u.criado_em, u.perfil FROM usuarios u JOIN sessoes s ON s.usuario_id = u.id
           WHERE s.token = ? AND s.expira_em > ?`,
-        args: [token, Date.now()],
+        args: [sessionKey(token), Date.now()],
       })
       return plain(result.rows[0])
     },
     async signOut(token) {
-      await db.execute({ sql: 'DELETE FROM sessoes WHERE token = ?', args: [token] })
+      await db.execute({ sql: 'DELETE FROM sessoes WHERE token = ?', args: [sessionKey(token)] })
+    },
+    /**
+     * Conta uma tentativa de cadastro/login para a chave (IP) e devolve o total na janela atual.
+     * Fica no banco porque, na Vercel, cada função e cada instância tem a própria memória.
+     */
+    async countAttempt(key, windowMs = 60000) {
+      const now = Date.now()
+      const [, result] = await db.batch([
+        { sql: 'DELETE FROM tentativas WHERE expira_em < ?', args: [now] },
+        {
+          sql: `INSERT INTO tentativas (chave, total, expira_em) VALUES (?, 1, ?)
+            ON CONFLICT(chave) DO UPDATE SET total = total + 1 RETURNING total`,
+          args: [key, now + windowMs],
+        },
+      ], 'write')
+      return Number(result.rows[0].total)
     },
     async readContent() {
       const row = (await db.execute('SELECT dados FROM conteudo_site WHERE id = 1')).rows[0]

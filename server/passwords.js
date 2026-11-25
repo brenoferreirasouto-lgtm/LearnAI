@@ -9,7 +9,9 @@ export async function hashPassword(password) {
   return `${salt}:${hash.toString('hex')}`
 }
 export async function verifyPassword(password, stored) {
-  const [salt, hash] = stored.split(':')
+  const [salt, hash] = typeof stored === 'string' ? stored.split(':') : []
+  // Hash salvo vazio ou corrompido: trata como senha incorreta em vez de derrubar a requisição.
+  if (!salt || !hash || !/^[a-f0-9]{128}$/.test(hash)) return false
   const candidate = await derive(password, salt, 64, options)
   return timingSafeEqual(candidate, Buffer.from(hash, 'hex'))
 }
