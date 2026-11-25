@@ -26,8 +26,8 @@ import {
   claimXp,
   createEmptyProgress,
   projectTemplate,
-  readProgress,
-  saveProgress,
+  readAccountProgress,
+  saveAccountProgress,
   type Progress,
   type Project,
   type PracticeResult,
@@ -2570,7 +2570,7 @@ function FinalResultsPage({
 }
 
 type AppProps = {
-  account: { nome: string; email: string }
+  account: { id: number; nome: string; email: string }
   onAccountSignOut: () => void
   onCreateAnotherAccount?: () => void
   accountNotice?: string
@@ -2578,8 +2578,8 @@ type AppProps = {
 
 function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice = "" }: AppProps) {
   const [progress, setProgress] = useState<Progress>(() => {
-    const saved = readProgress()
-    return { ...(saved.profileEmail === account.email ? saved : createEmptyProgress()), profileName: account.nome, profileEmail: account.email }
+    const saved = readAccountProgress(account)
+    return { ...saved, profileName: account.nome, profileEmail: account.email }
   })
   const [theme, setTheme] = useState<Theme>(() => readTheme())
   const [page, setPage] = useState<Page>("profile")
@@ -2591,8 +2591,8 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
   const [storageWarning, setStorageWarning] = useState(false)
 
   useEffect(() => {
-    setStorageWarning(!saveProgress(progress))
-  }, [progress])
+    setStorageWarning(!saveAccountProgress(account, progress))
+  }, [account, progress])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme

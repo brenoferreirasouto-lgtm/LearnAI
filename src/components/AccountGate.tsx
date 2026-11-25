@@ -4,7 +4,6 @@ import RegistrationForm from './RegistrationForm'
 import AdminPanel from './AdminPanel'
 import { defaultSiteContent } from '../../shared/site-content'
 import { accountRequest, type Usuario } from '../lib/accounts'
-import { createEmptyProgress, readProgress, saveProgress } from '../lib/progress'
 
 export default function AccountGate() {
   const [user, setUser] = useState<Usuario | null>(null)
@@ -14,9 +13,6 @@ export default function AccountGate() {
   const [formMode, setFormMode] = useState<'register' | 'login'>('register')
   const [content, setContent] = useState(defaultSiteContent)
   function activate(usuario: Usuario) {
-    const previous = readProgress()
-    const progress = previous.profileEmail === usuario.email ? previous : createEmptyProgress()
-    saveProgress({ ...progress, profileName: usuario.nome, profileEmail: usuario.email })
     try { localStorage.removeItem('learnai.session.signed-out.v1') } catch { /* A sessão permanece no servidor. */ }
     setUser(usuario)
   }

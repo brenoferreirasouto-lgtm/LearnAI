@@ -1,9 +1,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  accountProgressKey,
   claimXp,
   createEmptyProgress,
+  readAccountProgress,
   readProgress,
+  saveAccountProgress,
   saveProgress,
   storageKey,
 } from './progress'
@@ -252,5 +255,59 @@ describe('claimXp', () => {
     expect(secondClaim.xp).toBe(50)
     expect(secondClaim.rewardClaims).toEqual(['lesson-1'])
     expect(secondClaim).toBe(firstClaim)
+  })
+})
+
+describe('progresso por conta', () => {
+  const ana = { id: 1, email: 'ana@example.com' }
+  const bruno = { id: 2, email: 'bruno@example.com' }
+
+  it('migra o legado somente para a conta com o e-mail correspondente', () => {
+    const legacy = { ...createEmptyProgress(), profileEmail: ana.email, xp: 25 }
+    expect(saveProgress(legacy)).toBe(true)
+
+    expect(readAccountProgress(bruno).xp).toBe(0)
+    const brunoProgress = { ...createEmptyProgress(), profileEmail: bruno.email, xp: 50 }
+    expect(saveAccountProgress(bruno, brunoProgress)).toBe(true)
+    expect(readProgress()).toEqual(legacy)
+
+    const recovered = readAccountProgress(ana)
+    expect(recovered).toEqual(legacy)
+    expect(saveAccountProgress(ana, recovered)).toBe(true)
+    expect(localStorage.getItem(storageKey)).toBeNull()
+    expect(readAccountProgress(ana)).toEqual(legacy)
+    expect(readAccountProgress(bruno)).toEqual(brunoProgress)
+    expect(readAccountProgress({ ...ana, email: 'novo@example.com' })).toEqual(legacy)
+  })
+
+  it('mantém intacto o legado sem titular mesmo depois do primeiro salvamento', () => {
+    const legacy = { ...createEmptyProgress(), xp: 25 }
+    expect(saveProgress(legacy)).toBe(true)
+    expect(readAccountProgress(ana)).toEqual(createEmptyProgress())
+    expect(saveAccountProgress(ana, { ...createEmptyProgress(), profileEmail: ana.email })).toBe(true)
+    expect(readProgress()).toEqual(legacy)
+  })
+
+  it('mantém o legado quando a gravação por conta falha', () => {
+    const legacy = { ...createEmptyProgress(), profileEmail: ana.email, xp: 25 }
+    expect(saveProgress(legacy)).toBe(true)
+    const recovered = readAccountProgress(ana)
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Sem espaço disponível')
+    })
+    expect(saveAccountProgress(ana, recovered)).toBe(false)
+    write.mockRestore()
+    expect(localStorage.getItem(accountProgressKey(ana.id))).toBeNull()
+    expect(readProgress()).toEqual(legacy)
+  })
+
+  it('prioriza o progresso por ID e preserva um legado que não foi importado', () => {
+    const current = { ...createEmptyProgress(), profileEmail: ana.email, xp: 50 }
+    const legacy = { ...current, xp: 25 }
+    expect(saveAccountProgress(ana, current)).toBe(true)
+    expect(saveProgress(legacy)).toBe(true)
+    expect(readAccountProgress(ana)).toEqual(current)
+    expect(saveAccountProgress(ana, current)).toBe(true)
+    expect(readProgress()).toEqual(legacy)
   })
 })

@@ -57,7 +57,7 @@ npm.cmd run definir-senha -- bruno@bruno.com
 ```
 
 Digite a senha e confirme (a entrada fica oculta). A ferramenta também serve para redefinição administrativa local e invalida sessões anteriores da conta. Depois, clique em **Já tenho conta** e entre. Não existe recuperação pública por e-mail nesta versão; apenas saber o e-mail não permite definir a senha de uma conta antiga.
-O progresso de aprendizagem continua local. Nome e e-mail passam a ser persistidos no servidor; antigos cadastros exclusivos do localStorage não são migrados automaticamente.
+O progresso fica no navegador e é associado ao ID da conta autenticada. Sair ou alternar de conta preserva o registro local. Quando a conta ainda não tem um registro individual, o progresso legado é importado somente se o e-mail salvo corresponder ao da conta autenticada. O registro legado é removido após a gravação bem-sucedida. Registros sem correspondência ficam no armazenamento de origem. Limpar os dados do site remove o progresso local, que não é sincronizado entre dispositivos. Nome e e-mail da conta ficam no servidor.
 
 No desenvolvimento e no `vite preview`, o cadastro usa a API Node + SQLite; na Vercel, a mesma API roda em funções serverless com o banco Turso. Não existe cadastro só no navegador: se o servidor não responder, o app mostra "Servidor indisponível. Tente novamente em instantes." e não cria a conta.
 

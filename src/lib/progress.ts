@@ -58,6 +58,50 @@ export type Progress = {
 
 export const storageKey = "learnai.progress.v1"
 
+type ProgressAccount = { id: number; email: string }
+
+export function accountProgressKey(accountId: number): string {
+  return `learnai.progress.account.v1.${accountId}`
+}
+
+export function readAccountProgress(account: ProgressAccount): Progress {
+  const key = accountProgressKey(account.id)
+  try {
+    if (window.localStorage.getItem(key) !== null) return readProgress(key)
+  } catch {
+    return createEmptyProgress()
+  }
+
+  const legacy = readProgress()
+  return legacy.profileEmail && legacy.profileEmail === account.email
+    ? legacy
+    : createEmptyProgress()
+}
+
+export function saveAccountProgress(account: ProgressAccount, progress: Progress): boolean {
+  const key = accountProgressKey(account.id)
+  let legacy: string | null = null
+
+  try {
+    if (window.localStorage.getItem(key) === null && readProgress().profileEmail === account.email)
+      legacy = window.localStorage.getItem(storageKey)
+  } catch {
+    return false
+  }
+
+  if (!saveProgress(progress, key)) return false
+
+  // Keep the legacy record if it changed or if the new record could not be saved.
+  try {
+    if (legacy !== null && window.localStorage.getItem(key) !== null && window.localStorage.getItem(storageKey) === legacy)
+      window.localStorage.removeItem(storageKey)
+  } catch {
+    // The account record was saved. The legacy copy can remain if cleanup fails.
+  }
+
+  return true
+}
+
 export const emptyPromptDraft: PromptDraft = {
   context: "",
   goal: "",
@@ -87,10 +131,10 @@ export function createEmptyProgress(): Progress {
   }
 }
 
-export function readProgress(): Progress {
+export function readProgress(key = storageKey): Progress {
   const empty = createEmptyProgress()
   try {
-    const raw = window.localStorage.getItem(storageKey)
+    const raw = window.localStorage.getItem(key)
     if (!raw) return empty
     const value: unknown = JSON.parse(raw)
     if (!value || typeof value !== "object") return empty
@@ -189,7 +233,7 @@ export function readProgress(): Progress {
   }
 }
 
-export function saveProgress(progress: Progress): boolean {
+export function saveProgress(progress: Progress, key = storageKey): boolean {
   try {
     const hasActivity =
       progress.profileName.trim() ||
@@ -205,10 +249,10 @@ export function saveProgress(progress: Progress): boolean {
       progress.rewardClaims.length > 0 ||
       Object.values(progress.promptDraft).some(Boolean)
     if (!hasActivity) {
-      window.localStorage.removeItem(storageKey)
+      window.localStorage.removeItem(key)
       return true
     }
-    window.localStorage.setItem(storageKey, JSON.stringify(progress))
+    window.localStorage.setItem(key, JSON.stringify(progress))
     return true
   } catch {
     return false
