@@ -24,13 +24,13 @@ import {
 } from "./data/practice"
 import {
   claimXp,
-  createEmptyProgress,
   projectTemplate,
   type Progress,
   type Project,
   type PracticeResult,
   type QuizResult,
 } from "./lib/progress"
+import { resetProgress, type PromptDraftValue } from "./lib/prompt-draft"
 import { useAccountProgress } from "./lib/use-account-progress"
 import { calculateOverallResult } from "./lib/results"
 import { recommendNextLesson } from "./lib/recommendations"
@@ -1646,33 +1646,32 @@ function PromptStudio({
   onNotify,
 }: {
   progress: Progress
-  onDraft: (draft: Progress["promptDraft"]) => void
+  onDraft: (field: keyof Progress["promptDraft"], value: PromptDraftValue) => void
   onNotify: (message: string) => void
 }) {
   const draft = progress.promptDraft
   const [copied, setCopied] = useState(false)
   function update(field: keyof typeof draft, value: string) {
-    onDraft({ ...draft, [field]: value })
+    onDraft(field, value)
   }
   function generate() {
     if (!draft.goal.trim()) {
       onNotify("Preencha o objetivo antes de montar o prompt.")
       return
     }
-    const parts = [
+    onDraft("result", (latest) => latest.goal.trim() ? [
       "Ajude-me com a tarefa a seguir. Use as informações fornecidas e sinalize dúvidas em vez de presumir fatos.",
-      draft.context.trim() && `CONTEXTO\n${draft.context.trim()}`,
-      `OBJETIVO\n${draft.goal.trim()}`,
-      draft.audience.trim() && `PÚBLICO\n${draft.audience.trim()}`,
-      draft.inputs.trim() && `INFORMAÇÕES DISPONÍVEIS\n${draft.inputs.trim()}`,
-      draft.format.trim() && `FORMATO DE SAÍDA\n${draft.format.trim()}`,
-      draft.constraints.trim() &&
-        `RESTRIÇÕES E CRITÉRIOS\n${draft.constraints.trim()}`,
+      latest.context.trim() && `CONTEXTO\n${latest.context.trim()}`,
+      `OBJETIVO\n${latest.goal.trim()}`,
+      latest.audience.trim() && `PÚBLICO\n${latest.audience.trim()}`,
+      latest.inputs.trim() && `INFORMAÇÕES DISPONÍVEIS\n${latest.inputs.trim()}`,
+      latest.format.trim() && `FORMATO DE SAÍDA\n${latest.format.trim()}`,
+      latest.constraints.trim() &&
+        `RESTRIÇÕES E CRITÉRIOS\n${latest.constraints.trim()}`,
       "Se faltarem informações essenciais, faça perguntas. Separe fatos de suposições e não invente fontes.",
     ]
       .filter(Boolean)
-      .join("\n\n")
-    onDraft({ ...draft, result: parts })
+      .join("\n\n") : "")
     onNotify("Prompt montado com os campos que você preencheu.")
   }
   async function copyResult() {
@@ -2583,7 +2582,7 @@ type AppProps = {
 }
 
 function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice = "" }: AppProps) {
-  const { progress, updateProgress: setProgress, storageWarning } = useAccountProgress(account)
+  const { progress, updateProgress: setProgress, updateDraft, storageWarning } = useAccountProgress(account)
   const [theme, setTheme] = useState<Theme>(() => readTheme())
   const [page, setPage] = useState<Page>("profile")
   const [activeLessonId, setActiveLessonId] = useState(
@@ -2769,9 +2768,6 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
       ),
     }))
   }
-  function updatePromptDraft(draft: Progress["promptDraft"]) {
-    setProgress((current) => ({ ...current, promptDraft: draft }))
-  }
   function updateReflection(lessonId: string, value: string) {
     setProgress((current) => ({
       ...current,
@@ -2779,7 +2775,8 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
     }))
   }
   function clearLocalData() {
-    setProgress((current) => ({ ...createEmptyProgress(), profileName: current.profileName, profileEmail: current.profileEmail }))
+    const revision = crypto.randomUUID?.() ?? `reset-${Date.now()}-${Math.random()}`
+    setProgress((current) => resetProgress(current, revision))
     notify("Progresso local removido. Cadastro preservado no servidor.")
   }
 
@@ -2947,7 +2944,7 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
           {page === "studio" && (
             <PromptStudio
               progress={progress}
-              onDraft={updatePromptDraft}
+              onDraft={updateDraft}
               onNotify={notify}
             />
           )}

@@ -1,13 +1,53 @@
 import {
   archiveStorageKey, createEmptyProgress, decodeProgress, saveProgress, storageKey,
-  type Progress,
+  emptyPromptDraft, type Progress, type PromptDraft,
 } from './progress'
+import { editPromptDraft, type PromptDraftValue } from './prompt-draft'
 
 export type ProgressAccount = { id: number; nome: string; email: string }
 export type ProgressChange = (current: Progress) => Progress
 
 export function accountProgressKey(id: number) {
   return `learnai.progress.account.v1.${id}`
+}
+
+const draftFields = Object.keys(emptyPromptDraft) as (keyof PromptDraft)[]
+
+export function promptDraftStoragePrefix(accountId: number) {
+  return accountProgressKey(accountId) + '.draft.'
+}
+
+function draftFieldKey(accountId: number, revision: string | undefined, field: keyof PromptDraft) {
+  return promptDraftStoragePrefix(accountId) + (revision ?? 'legacy') + '.' + field
+}
+
+function withStoredDraft(storage: Storage, account: ProgressAccount, progress: Progress): Progress {
+  const promptDraft = { ...progress.promptDraft }
+  for (const field of draftFields) {
+    const value = storage.getItem(draftFieldKey(account.id, progress.promptDraftRevision, field))
+    if (value !== null) promptDraft[field] = value
+  }
+  return { ...progress, promptDraft }
+}
+
+export function persistPromptDraftField(
+  account: ProgressAccount,
+  field: keyof PromptDraft,
+  value: PromptDraftValue,
+  revision: Progress['promptDraftRevision'],
+) {
+  const progress = readAccountProgress(account)
+  try {
+    const storage = window.localStorage
+    const raw = storage.getItem(accountProgressKey(account.id))
+    if (!decodeProgress(raw)) return { progress, saved: false }
+    const next = editPromptDraft(field, value, revision)(progress)
+    if (next === progress) return { progress, saved: true }
+    storage.setItem(draftFieldKey(account.id, revision, field), next.promptDraft[field])
+    return { progress: next, saved: true }
+  } catch {
+    return { progress, saved: false }
+  }
 }
 
 function owner(progress: Progress, account: ProgressAccount): Progress {
@@ -47,7 +87,8 @@ export function readAccountProgress(account: ProgressAccount): Progress {
     const storage = window.localStorage
     const raw = storage.getItem(accountProgressKey(account.id))
     const current = decodeProgress(raw)
-    if (current || raw !== null) return owner(current ?? createEmptyProgress(), account)
+    if (current) return withStoredDraft(storage, account, owner(current, account))
+    if (raw !== null) return owner(createEmptyProgress(), account)
     const { active, archived } = readSources(storage, account)
     return owner(active ?? archived ?? createEmptyProgress(), account)
   } catch {
@@ -125,7 +166,20 @@ export function persistAccountProgress(
     }
 
     const saved = changes.length === 0 || saveProgress(progress, key)
-    return { base, progress, saved }
+    if (saved && base.promptDraftRevision !== progress.promptDraftRevision) {
+      for (const field of draftFields) {
+        try {
+          storage.removeItem(draftFieldKey(account.id, base.promptDraftRevision, field))
+        } catch {
+          // The new revision makes the old field inaccessible even if cleanup fails.
+        }
+      }
+    }
+    return {
+      base: withStoredDraft(storage, account, base),
+      progress: withStoredDraft(storage, account, progress),
+      saved,
+    }
   } catch {
     return { base, progress: changes.reduce((value, change) => change(value), base), saved: false }
   }

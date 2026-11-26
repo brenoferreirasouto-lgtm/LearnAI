@@ -54,6 +54,7 @@ export type Progress = {
   projects: Project[]
   lastLessonId: string | null
   promptDraft: PromptDraft
+  promptDraftRevision?: string
 }
 
 export const storageKey = "learnai.progress.v1"
@@ -180,6 +181,7 @@ export function decodeProgress(raw: string | null): Progress | null {
         : [],
       lastLessonId:
         typeof data.lastLessonId === "string" ? data.lastLessonId : null,
+      ...(typeof data.promptDraftRevision === "string" && { promptDraftRevision: data.promptDraftRevision }),
       promptDraft: {
         context: typeof draft.context === "string" ? draft.context : "",
         goal: typeof draft.goal === "string" ? draft.goal : "",

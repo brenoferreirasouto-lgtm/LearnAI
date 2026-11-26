@@ -116,6 +116,28 @@ test('F05 — preserva progressos distintos ao alternar contas e reabrir o naveg
     await signUp(page, 'Bruno', emailB)
     expect((await readProgress(page)).completedLessons).toEqual([])
     await expect(otherTab.getByText(emailB)).toBeVisible()
+    for (const tab of [page, otherTab]) {
+      await tab.getByRole('button', { name: 'Construtor de prompts' }).first().click()
+    }
+    await page.evaluate(() => new Promise<void>(resolve => {
+      void navigator.locks.request('learnai-progress', () => new Promise<void>(release => {
+        window.addEventListener('learnai-test:release-progress', () => release(), { once: true })
+        resolve()
+      }))
+    }))
+    try {
+      await page.bringToFront()
+      await page.getByRole('textbox', { name: /Contexto/ }).fill('Contexto da primeira aba')
+      await expect(page.getByRole('textbox', { name: /Contexto/ })).toHaveValue('Contexto da primeira aba')
+      await otherTab.bringToFront()
+      await otherTab.getByRole('textbox', { name: /Objetivo/ }).fill('Objetivo da segunda aba')
+    } finally {
+      await page.evaluate(() => { window.dispatchEvent(new Event('learnai-test:release-progress')) })
+    }
+    for (const tab of [page, otherTab]) {
+      await expect(tab.getByRole('textbox', { name: /Contexto/ })).toHaveValue('Contexto da primeira aba')
+      await expect(tab.getByRole('textbox', { name: /Objetivo/ })).toHaveValue('Objetivo da segunda aba')
+    }
     await openLesson(page, 2)
     await finishLesson(page)
     await expect.poll(async () => (await readProgress(page)).completedLessons.length).toBe(1)
@@ -144,6 +166,9 @@ test('F05 — preserva progressos distintos ao alternar contas e reabrir o naveg
     await page.getByRole('button', { name: 'Já tenho conta' }).click()
     await signIn(page, emailB)
     await expectCompletedLessons(page, [lessonB])
+    await page.getByRole('button', { name: 'Construtor de prompts' }).first().click()
+    await expect(page.getByRole('textbox', { name: /Contexto/ })).toHaveValue('Contexto da primeira aba')
+    await expect(page.getByRole('textbox', { name: /Objetivo/ })).toHaveValue('Objetivo da segunda aba')
   } finally {
     await reopened.close()
   }

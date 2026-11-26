@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  accountProgressKey, persistAccountProgress, readAccountProgress, withProgressLock,
+  accountProgressKey, persistAccountProgress, persistPromptDraftField,
+  promptDraftStoragePrefix, readAccountProgress, withProgressLock,
   type ProgressAccount, type ProgressChange,
 } from './account-progress'
+import { editPromptDraft, type PromptDraftValue } from './prompt-draft'
+import type { PromptDraft } from './progress'
 
 export function useAccountProgress(account: ProgressAccount) {
   const [progress, setProgress] = useState(() => readAccountProgress(account))
@@ -27,7 +30,9 @@ export function useAccountProgress(account: ProgressAccount) {
     withProgressLock(locked => { if (active) persist(locked) })
 
     function sync(event: StorageEvent) {
-      if (event.storageArea !== localStorage || (event.key !== null && event.key !== accountProgressKey(account.id))) return
+      if (event.storageArea !== localStorage) return
+      if (event.key !== null && event.key !== accountProgressKey(account.id) &&
+        !event.key.startsWith(promptDraftStoragePrefix(account.id))) return
       withProgressLock(locked => {
         if (!active) return
         if (pending.current.length) {
@@ -51,5 +56,18 @@ export function useAccountProgress(account: ProgressAccount) {
     withProgressLock(persist)
   }
 
-  return { progress, updateProgress, storageWarning }
+  function updateDraft(field: keyof PromptDraft, value: PromptDraftValue) {
+    const revision = progress.promptDraftRevision
+    setProgress(editPromptDraft(field, value, revision))
+    withProgressLock(() => {
+      const result = persistPromptDraftField(account, field, value, revision)
+      lastSaved.current = result.progress
+      if (mounted.current) {
+        setProgress(pending.current.reduce((current, change) => change(current), result.progress))
+        setStorageWarning(!result.saved)
+      }
+    })
+  }
+
+  return { progress, updateProgress, updateDraft, storageWarning }
 }
