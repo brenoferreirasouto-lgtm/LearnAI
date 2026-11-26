@@ -104,3 +104,14 @@ A migração verifica a gravação antes de limpar uma cópia equivalente. Uma l
 próximo acesso. Com Web Locks, as abas serializam gravações e recarregam as mudanças do mesmo ID. Sem esse recurso,
 o aplicativo preserva as origens e as gravações simultâneas ficam sujeitas à última gravação. Limpar os dados do site
 remove o progresso local. Dispositivos e perfis de navegador diferentes mantêm cópias independentes.
+
+### Edições simultâneas no Estúdio de Prompts
+
+Cada edição grava somente o campo alterado, em uma chave vinculada à conta e à revisão do rascunho. Com Web Locks, leitura,
+atualização e gravação usam o mesmo bloqueio. Campos diferentes são preservados. Para o mesmo campo, prevalece
+a última gravação efetivada sob o bloqueio. As demais abas recebem a atualização via evento de armazenamento.
+A geração do prompt também lê os campos mais recentes antes de gravar o resultado.
+
+A redefinição do progresso cria uma nova revisão do rascunho. Edições pendentes da revisão anterior são descartadas
+para evitar restaurar dados removidos. A revisão é opcional nos registros legados. Sem Web Locks, a aplicação continua
+gravando por campo, mas leituras e gravações concorrentes podem se sobrepor.

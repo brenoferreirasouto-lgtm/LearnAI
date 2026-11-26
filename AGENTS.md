@@ -27,5 +27,5 @@ Versões: Node 22 e pnpm 9.15.9, as mesmas do CI (`.github/workflows/testes.yml`
 ## Cuidados
 
 - Imagens e vídeos são enviados ao Git LFS por padrão (`.gitattributes`). Arquivos servidos pelo site em `public/` precisam de uma exceção no `.gitattributes`, senão a Vercel publica o ponteiro de 131 bytes no lugar do arquivo.
-- Contas e sessões ficam no servidor; o progresso de aprendizagem fica no navegador, separado por e-mail.
+- Contas e sessões ficam no servidor; o progresso de aprendizagem fica no navegador, separado pelo ID da conta autenticada.
 - Leia o `CONTRIBUTING.md` antes de abrir um pull request.

@@ -1,9 +1,10 @@
+import { resetProgress, type PromptDraftValue } from './prompt-draft'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  accountProgressKey, persistAccountProgress, readAccountProgress,
+  accountProgressKey, persistAccountProgress, persistPromptDraftField, readAccountProgress,
   type ProgressAccount, type ProgressChange,
 } from './account-progress'
-import { archiveStorageKey, createEmptyProgress, storageKey } from './progress'
+import { archiveStorageKey, createEmptyProgress, storageKey, type PromptDraft } from './progress'
 
 const ana = { id: 1, nome: 'Ana', email: 'ana@example.com' }
 const bruno = { id: 2, nome: 'Bruno', email: 'bruno@example.com' }
@@ -148,5 +149,58 @@ describe('progresso individual e migração', () => {
     failed.mockRestore()
     expect(migrate(ana, [addSecond]).saved).toBe(true)
     expect(migrate(ana, [addFirst]).progress.completedLessons).toEqual(['prompting', 'generative-ai'])
+  })
+})
+
+describe('concorrência do Estúdio de Prompts', () => {
+  beforeEach(() => { migrate(ana) })
+
+  function saveField(field: keyof PromptDraft, value: PromptDraftValue, revision?: string) {
+    return persistPromptDraftField(ana, field, value, revision)
+  }
+
+  it.each([false, true])('preserva campos distintos na ordem invertida=%s', reverse => {
+    const revisionA = readAccountProgress(ana).promptDraftRevision
+    const revisionB = readAccountProgress(ana).promptDraftRevision
+    const changes = [
+      () => saveField('context', 'Contexto A', revisionA),
+      () => saveField('goal', 'Objetivo B', revisionB),
+    ]
+    for (const change of reverse ? changes.reverse() : changes) {
+      expect(change().saved).toBe(true)
+    }
+    expect(readAccountProgress(ana).promptDraft).toMatchObject({
+      context: 'Contexto A', goal: 'Objetivo B',
+    })
+  })
+
+  it('usa a última gravação efetivada para o mesmo campo', () => {
+    const revision = readAccountProgress(ana).promptDraftRevision
+    saveField('goal', 'Primeiro', revision)
+    saveField('goal', 'Segundo', revision)
+    expect(readAccountProgress(ana).promptDraft.goal).toBe('Segundo')
+  })
+
+  it('preserva o destino quando a escrita falha e rejeita a edição pendente após redefinição', () => {
+    saveField('context', 'Salvo')
+    const pending = () => saveField('goal', 'Edição antiga')
+    const failed = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Sem espaço')
+    })
+    expect(pending().saved).toBe(false)
+    expect(readAccountProgress(ana).promptDraft).toMatchObject({ context: 'Salvo', goal: '' })
+    failed.mockRestore()
+
+    expect(migrate(ana, [current => resetProgress(current, 'revision-after-reset')]).saved).toBe(true)
+    expect(pending().progress.promptDraft).toMatchObject({ context: '', goal: '' })
+    expect(readAccountProgress(ana).promptDraftRevision).toBe('revision-after-reset')
+    expect(saveField('goal', 'Novo', 'revision-after-reset').progress.promptDraft.goal).toBe('Novo')
+  })
+
+  it('calcula o resultado com os valores mais recentes sem substituir outros campos', () => {
+    saveField('goal', 'Objetivo atualizado')
+    expect(saveField('result', draft => draft.goal).progress.promptDraft).toMatchObject({
+      goal: 'Objetivo atualizado', result: 'Objetivo atualizado',
+    })
   })
 })
