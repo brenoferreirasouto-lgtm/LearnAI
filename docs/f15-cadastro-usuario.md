@@ -95,4 +95,12 @@ Os testes em `server/registration.test.js` verificam HTTP, banco real temporári
 
 ## Progresso de mais de uma conta no mesmo navegador
 
-O progresso de aprendizagem (XP, lições, quizzes e projetos) fica no `localStorage` do navegador. Quando outra conta entra no mesmo navegador, o progresso da conta anterior é guardado em `learnai.progress.archive.v1`, separado por e-mail, e volta quando ela entra de novo. Antes, ele era apagado. O progresso ainda não é sincronizado com o servidor: em outro dispositivo, a conta começa do zero.
+O progresso (XP, lições, quizzes e projetos) fica no navegador, em um registro por ID da conta autenticada.
+Sair ou trocar de conta preserva o progresso. O registro individual válido tem precedência sobre o registro ativo legado.
+Na ausência de ambos, o aplicativo usa o arquivo legado por e-mail. Uma origem legada só é elegível quando o e-mail
+salvo corresponde à conta autenticada. Cópias divergentes, ilegíveis ou sem titular confirmado ficam preservadas.
+
+A migração verifica a gravação antes de limpar uma cópia equivalente. Uma limpeza interrompida pode ser retomada no
+próximo acesso. Com Web Locks, as abas serializam gravações e recarregam as mudanças do mesmo ID. Sem esse recurso,
+o aplicativo preserva as origens e as gravações simultâneas ficam sujeitas à última gravação. Limpar os dados do site
+remove o progresso local. Dispositivos e perfis de navegador diferentes mantêm cópias independentes.

@@ -6,7 +6,6 @@ import {
   readProgress,
   saveProgress,
   storageKey,
-  switchProgressProfile,
 } from './progress'
 
 beforeEach(() => {
@@ -253,32 +252,5 @@ describe('claimXp', () => {
     expect(secondClaim.xp).toBe(50)
     expect(secondClaim.rewardClaims).toEqual(['lesson-1'])
     expect(secondClaim).toBe(firstClaim)
-  })
-})
-
-describe('switchProgressProfile', () => {
-  it('guarda o progresso de uma conta quando outra entra no mesmo navegador e o restaura depois', () => {
-    switchProgressProfile('Ana', 'ana@example.com')
-    saveProgress({ ...readProgress(), xp: 120, completedLessons: ['licao-1'] })
-
-    const bruno = switchProgressProfile('Bruno', 'bruno@example.com')
-    expect(bruno.profileEmail).toBe('bruno@example.com')
-    expect(bruno.xp).toBe(0)
-    expect(bruno.completedLessons).toEqual([])
-    saveProgress({ ...bruno, xp: 30 })
-
-    const ana = switchProgressProfile('Ana', 'ANA@example.com')
-    expect(ana.profileEmail).toBe('ana@example.com')
-    expect(ana.xp).toBe(120)
-    expect(ana.completedLessons).toEqual(['licao-1'])
-    expect(readProgress().xp).toBe(120)
-
-    expect(switchProgressProfile('Bruno', 'bruno@example.com').xp).toBe(30)
-  })
-
-  it('mantém o progresso quando a mesma conta entra de novo', () => {
-    switchProgressProfile('Ana', 'ana@example.com')
-    saveProgress({ ...readProgress(), xp: 50 })
-    expect(switchProgressProfile('Ana Maria', 'ana@example.com')).toMatchObject({ xp: 50, profileName: 'Ana Maria' })
   })
 })

@@ -26,13 +26,12 @@ import {
   claimXp,
   createEmptyProgress,
   projectTemplate,
-  readProgress,
-  saveProgress,
   type Progress,
   type Project,
   type PracticeResult,
   type QuizResult,
 } from "./lib/progress"
+import { useAccountProgress } from "./lib/use-account-progress"
 import { calculateOverallResult } from "./lib/results"
 import { recommendNextLesson } from "./lib/recommendations"
 
@@ -2577,17 +2576,14 @@ function FinalResultsPage({
 }
 
 type AppProps = {
-  account: { nome: string; email: string }
+  account: { id: number; nome: string; email: string }
   onAccountSignOut: () => void
   onCreateAnotherAccount?: () => void
   accountNotice?: string
 }
 
 function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice = "" }: AppProps) {
-  const [progress, setProgress] = useState<Progress>(() => {
-    const saved = readProgress()
-    return { ...(saved.profileEmail === account.email ? saved : createEmptyProgress()), profileName: account.nome, profileEmail: account.email }
-  })
+  const { progress, updateProgress: setProgress, storageWarning } = useAccountProgress(account)
   const [theme, setTheme] = useState<Theme>(() => readTheme())
   const [page, setPage] = useState<Page>("profile")
   const [activeLessonId, setActiveLessonId] = useState(
@@ -2595,11 +2591,6 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
   )
   const [activeQuizId, setActiveQuizId] = useState("hallucinations")
   const [toast, setToast] = useState(accountNotice)
-  const [storageWarning, setStorageWarning] = useState(false)
-
-  useEffect(() => {
-    setStorageWarning(!saveProgress(progress))
-  }, [progress])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -2645,7 +2636,7 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
     }
     setProgress((current) => ({
       ...claimXp(current, `lesson:${id}`, 25),
-      completedLessons: [...current.completedLessons, id],
+      completedLessons: [...new Set([...current.completedLessons, id])],
     }))
     notify("Módulo concluído. +25 XP para sua jornada.")
   }
@@ -2788,7 +2779,7 @@ function App({ onAccountSignOut, onCreateAnotherAccount, account, accountNotice 
     }))
   }
   function clearLocalData() {
-    setProgress({ ...createEmptyProgress(), profileName: progress.profileName, profileEmail: progress.profileEmail })
+    setProgress((current) => ({ ...createEmptyProgress(), profileName: current.profileName, profileEmail: current.profileEmail }))
     notify("Progresso local removido. Cadastro preservado no servidor.")
   }
 
