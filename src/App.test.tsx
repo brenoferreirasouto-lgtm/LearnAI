@@ -19,7 +19,9 @@ import {
 import App from './App'
 import { createEmptyProgress, storageKey, type Progress } from './lib/progress'
 
-const account = { nome: 'Bruno', email: 'bruno@example.com' }
+import { accountProgressKey } from './lib/account-progress'
+
+const account = { id: 1, nome: 'Bruno', email: 'bruno@example.com' }
 
 function saveAccountProgress(change: (progress: Progress) => void = () => {}) {
   const savedProgress = createEmptyProgress()
@@ -30,7 +32,7 @@ function saveAccountProgress(change: (progress: Progress) => void = () => {}) {
 }
 
 function readSavedProgress() {
-  return JSON.parse(localStorage.getItem(storageKey) ?? 'null')
+  return JSON.parse(localStorage.getItem(accountProgressKey(account.id)) ?? 'null')
 }
 
 function renderApp(onAccountSignOut = vi.fn()) {

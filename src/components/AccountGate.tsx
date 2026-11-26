@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import App from '../App'
 import RegistrationForm from './RegistrationForm'
 import AdminPanel from './AdminPanel'
 import { defaultSiteContent } from '../../shared/site-content'
 import { accountRequest, type Usuario } from '../lib/accounts'
-import { switchProgressProfile } from '../lib/progress'
+
+const sessionChangeKey = 'learnai.session.changed.v1'
+
+function notifySessionChange() {
+  try { localStorage.setItem(sessionChangeKey, crypto.randomUUID()) } catch { /* A sessão é gerenciada pelo servidor. */ }
+}
 
 export default function AccountGate() {
   const [user, setUser] = useState<Usuario | null>(null)
@@ -13,25 +18,51 @@ export default function AccountGate() {
   const [success, setSuccess] = useState('')
   const [formMode, setFormMode] = useState<'register' | 'login'>('register')
   const [content, setContent] = useState(defaultSiteContent)
+  const sessionRequest = useRef(0)
+
   function activate(usuario: Usuario) {
-    switchProgressProfile(usuario.nome, usuario.email)
-    try { localStorage.removeItem('learnai.session.signed-out.v1') } catch { /* A sessão permanece no servidor. */ }
+    sessionRequest.current++
     setUser(usuario)
+    setLoading(false)
+    notifySessionChange()
   }
   useEffect(() => {
     let active = true
     accountRequest('/api/conteudo').then(data => { if (active && data.conteudo) setContent(data.conteudo) }).catch(() => { /* Os textos padrão continuam disponíveis. */ })
-    accountRequest('/api/sessao').then(data => {
-      if (active && data.usuario) activate(data.usuario)
-    }).catch(err => { if (active) setError(err.message) })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    function refreshSession() {
+      const request = ++sessionRequest.current
+      const isCurrent = () => active && request === sessionRequest.current
+      setLoading(true)
+      accountRequest('/api/sessao').then(data => {
+        if (isCurrent()) {
+          setUser(data.usuario)
+          setSuccess('')
+          setError('')
+        }
+      }).catch(err => {
+        if (isCurrent()) {
+          setUser(null)
+          setError(err.message)
+        }
+      }).finally(() => { if (isCurrent()) setLoading(false) })
+    }
+    function onStorage(event: StorageEvent) {
+      if (event.key === sessionChangeKey && event.storageArea === localStorage) refreshSession()
+    }
+    window.addEventListener('storage', onStorage)
+    refreshSession()
+    return () => {
+      active = false
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
   async function signOut(createAnother = false) {
     try {
       await accountRequest('/api/sessao', 'DELETE')
       setFormMode(createAnother ? 'register' : 'login')
-      setUser(null); setSuccess(''); setError('')
+      sessionRequest.current++
+      setUser(null); setSuccess(''); setError(''); setLoading(false)
+      notifySessionChange()
     } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível sair.') }
   }
   if (loading) return <p role="status">Carregando cadastro…</p>

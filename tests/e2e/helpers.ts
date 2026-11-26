@@ -33,7 +33,11 @@ export async function signUp(
 }
 
 export async function readProgress(page: Page) {
-  return page.evaluate(() =>
-    JSON.parse(localStorage.getItem('learnai.progress.v1') ?? 'null'),
+  const response = await page.request.get('/api/sessao')
+  expect(response.ok()).toBe(true)
+  const { usuario } = await response.json()
+  const key = 'learnai.progress.account.v1.' + usuario.id
+  return page.evaluate(storageKey =>
+    JSON.parse(localStorage.getItem(storageKey) ?? 'null'), key,
   )
 }
